@@ -1,0 +1,25 @@
+{
+  "name": "coze-bot-test",
+  "version": "1.0.0",
+  "description": "Coze API Bot 测试项目",
+  "main": "coze-bot-core.js",
+  "scripts": {
+    "test": "node coze-bot-core.js",
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "coze",
+    "api",
+    "bot",
+    "test"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "multer": "^2.0.2"
+  }
+}
