@@ -3,8 +3,13 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
+// 从环境变量读取配置，如果没有则使用默认值
+const LOGIN_HOST = process.env.LOGIN_HOST || '172.16.8.8';
+const LOGIN_PORT = parseInt(process.env.LOGIN_PORT || '80');
+const LOGIN_PATH = process.env.LOGIN_PATH || '/infra-auth/api/noauth/v2/login';
+
 // 登录接口URL
-const LOGIN_URL = 'http://172.16.8.8/infra-auth/api/noauth/v2/login';
+const LOGIN_URL = `http://${LOGIN_HOST}${LOGIN_PATH}`;
 
 // 请求体数据 - 从环境变量读取，如果没有则使用默认值
 const requestData = {
@@ -15,9 +20,9 @@ const requestData = {
 
 // 准备HTTP请求选项
 const options = {
-  hostname: '172.16.8.8',
-  port: 80,
-  path: '/infra-auth/api/noauth/v2/login',
+  hostname: LOGIN_HOST,
+  port: LOGIN_PORT,
+  path: LOGIN_PATH,
   method: 'POST',
   headers: {
     'Content-Type': 'application/json'
@@ -56,20 +61,40 @@ const req = http.request(options, (res) => {
         if (jsonResponse.items && jsonResponse.items.token) {
           console.log('🔑 访问令牌:', jsonResponse.items.token);
 
-          // 将token写入.env文件
+          // 更新.env文件中的token（保持其他配置不变）
           const envPath = path.join(__dirname, '.env');
-          let envContent = `ACCESS_TOKEN=Bearer ${jsonResponse.items.token}\n`;
-
-          if (jsonResponse.items.refreshToken) {
-            envContent += `REFRESH_TOKEN=${jsonResponse.items.refreshToken}\n`;
-            console.log('🔄 刷新令牌:', jsonResponse.items.refreshToken);
-          }
-
+          
           try {
+            // 读取现有的.env文件内容
+            let envContent = '';
+            if (fs.existsSync(envPath)) {
+              envContent = fs.readFileSync(envPath, 'utf8');
+            }
+            
+            // 更新ACCESS_TOKEN
+            const newAccessToken = `ACCESS_TOKEN=Bearer ${jsonResponse.items.token}`;
+            if (envContent.includes('ACCESS_TOKEN=')) {
+              envContent = envContent.replace(/ACCESS_TOKEN=.*$/m, newAccessToken);
+            } else {
+              envContent += `\n${newAccessToken}\n`;
+            }
+            
+            // 更新REFRESH_TOKEN（如果存在）
+            if (jsonResponse.items.refreshToken) {
+              const newRefreshToken = `REFRESH_TOKEN=${jsonResponse.items.refreshToken}`;
+              if (envContent.includes('REFRESH_TOKEN=')) {
+                envContent = envContent.replace(/REFRESH_TOKEN=.*$/m, newRefreshToken);
+              } else {
+                envContent += `${newRefreshToken}\n`;
+              }
+              console.log('🔄 刷新令牌:', jsonResponse.items.refreshToken);
+            }
+            
+            // 写回文件
             fs.writeFileSync(envPath, envContent, 'utf8');
-            console.log('💾 Token已保存到 .env 文件');
+            console.log('💾 Token已更新到 .env 文件（保持其他配置不变）');
           } catch (error) {
-            console.error('❌ 保存.env文件失败:', error.message);
+            console.error('❌ 更新.env文件失败:', error.message);
           }
         }
       } else {

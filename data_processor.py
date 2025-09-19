@@ -107,10 +107,19 @@ def parse_bot_output(output):
             break
 
     current_segment = None
+    collecting_content = False
+    content_lines = []
+    
     for line in lines:
         if line.startswith('--- 分段'):
             if current_segment:
+                # 保存之前收集的多行内容
+                if content_lines:
+                    # 将换行符替换为特殊标记，避免CSV格式问题
+                    current_segment['block_result'] = '\\n'.join(content_lines)
                 segments.append(current_segment)
+                content_lines = []
+                collecting_content = False
             current_segment = {
                 'block_type': '',
                 'block_subtype': '',
@@ -123,10 +132,12 @@ def parse_bot_output(output):
                 # 提取消息类型
                 type_part = line.split('消息类型:')[1].strip()
                 current_segment['block_type'] = type_part
+                collecting_content = False
             elif '消息子类型:' in line:
                 # 提取消息子类型
                 subtype_part = line.split('消息子类型:')[1].strip()
                 current_segment['block_subtype'] = subtype_part
+                collecting_content = False
             elif '首token时间:' in line:
                 # 提取首token时间
                 time_part = line.split('首token时间:')[1].split('秒')[0].strip()
@@ -134,6 +145,7 @@ def parse_bot_output(output):
                     current_segment['block_start'] = float(time_part)
                 except ValueError:
                     current_segment['block_start'] = 0.0
+                collecting_content = False
             elif '结束时间:' in line:
                 # 提取结束时间
                 time_part = line.split('结束时间:')[1].split('秒')[0].strip()
@@ -141,13 +153,22 @@ def parse_bot_output(output):
                     current_segment['block_end'] = float(time_part)
                 except ValueError:
                     current_segment['block_end'] = current_segment['block_start']
+                collecting_content = False
             elif '内容:' in line and '无内容' not in line:
-                # 提取内容
+                # 开始收集内容（可能是多行）
                 content_part = line.split('内容:')[1].strip()
-                current_segment['block_result'] = content_part
+                content_lines = [content_part] if content_part else []
+                collecting_content = True
+            elif collecting_content and line.strip() and not line.startswith('---'):
+                # 继续收集多行内容，直到遇到下一个分段或结束
+                content_lines.append(line)
 
     # 添加最后一个分段
     if current_segment:
+        # 保存最后一个分段收集的多行内容
+        if content_lines:
+            # 将换行符替换为特殊标记，避免CSV格式问题
+            current_segment['block_result'] = '\\n'.join(content_lines)
         segments.append(current_segment)
 
     return segments, chat_id
@@ -361,6 +382,8 @@ def main():
         input_csv = "data/test_set20250918.xls"
         print(f"使用默认输入文件: {input_csv}")
 
+    # 确保data目录存在
+    os.makedirs('data', exist_ok=True)
     output_csv = f"data/results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
 
     print("=" * 60)

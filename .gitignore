@@ -11,9 +11,11 @@ yarn-error.log*
 .env.test
 .env.production
 
-#data
-data/
-uploads/
+# Data and uploads directories - keep folder structure but ignore contents
+data/*
+!data/.gitkeep
+uploads/*
+!uploads/.gitkeep
 
 # Python
 __pycache__/

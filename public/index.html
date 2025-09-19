@@ -1088,8 +1088,13 @@
                         cellClass = `score-cell score-${value}`;
                     }
                     
+                    // 转换换行符转义字符为HTML换行
+                    if (typeof value === 'string') {
+                        value = value.replace(/\\n/g, '<br>');
+                    }
+                    
                     // 为长文本添加截断样式
-                    if (typeof value === 'string' && value.length > 50) {
+                    if (typeof value === 'string' && value.replace(/<br>/g, '\n').length > 50) {
                         return `<td class="${cellClass}"><div class="text-truncate" onclick="toggleText(this)" title="点击展开/收起">${value}</div></td>`;
                     }
                     
