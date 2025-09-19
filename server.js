@@ -468,10 +468,31 @@ function parseCSVLine(line) {
 }
 
 // 启动服务器
-app.listen(PORT, () => {
-  console.log(`🚀 服务器运行在 http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  // 获取本机IP地址
+  const os = require('os');
+  const networkInterfaces = os.networkInterfaces();
+  let localIP = 'localhost';
+  
+  // 查找第一个非回环的IPv4地址
+  for (const interfaceName in networkInterfaces) {
+    const interfaces = networkInterfaces[interfaceName];
+    for (const iface of interfaces) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        localIP = iface.address;
+        break;
+      }
+    }
+    if (localIP !== 'localhost') break;
+  }
+  
+  console.log(`🚀 服务器启动成功！`);
+  console.log(`📍 本地访问: http://localhost:${PORT}`);
+  console.log(`🌐 局域网访问: http://${localIP}:${PORT}`);
   console.log(`📁 文件上传目录: uploads/`);
   console.log(`📊 数据目录: data/`);
+  console.log(`\n👥 同事可以通过以下地址访问:`);
+  console.log(`   http://${localIP}:${PORT}`);
 });
 
 // 优雅关闭
