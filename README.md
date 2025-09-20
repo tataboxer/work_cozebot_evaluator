@@ -107,15 +107,7 @@ pip install pandas requests python-dotenv
 ```
 
 ### 2. 配置环境变量
-```bash
-# 复制配置模板
-cp .env.example .env
-
-# 编辑配置文件，填入真实的API密钥
-nano .env  # 或使用其他编辑器
-```
-
-**必填配置项：**
+创建 `.env` 文件：
 ```env
 # Coze API配置
 COZE_API_TOKEN=your_coze_api_token
@@ -125,12 +117,16 @@ COZE_BOT_ID=your_bot_id
 llm_url=https://ark.cn-beijing.volces.com/api/v3/
 llm_api_key=your_volcano_api_key
 llm_model_name=doubao-1-5-pro-32k-250115
-```
 
-**API密钥获取指南：**
-- 🔗 [Coze API密钥申请](https://www.coze.cn/docs/developer_guides/api_overview)
-- 🔗 [火山引擎API密钥申请](https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey)
-- 🔗 [ModelScope API密钥申请](https://modelscope.cn/my/myaccesstoken)
+# 并发配置
+DATA_PROCESSOR_THREADS=5
+ASSESS_THREADS=5
+
+# 业务系统配置 (可选)
+LOGIN_HOST=your_business_system_host
+LOGIN_USERNAME=encrypted_username
+LOGIN_PASSWORD=encrypted_password
+```
 
 ### 3. 启动服务
 ```bash
@@ -147,26 +143,13 @@ npm start
 ### 🎯 完整评估流程
 
 #### 步骤1: 准备测试数据
-
-**📋 使用提供的测试集示例：**
-项目根目录包含 `test_set_example.xls` 文件，这是一个标准的测试数据集示例，包含了科技馆常见的用户问题，可以直接用于测试系统功能。
-
-**📝 自定义测试数据格式：**
-创建包含以下列的Excel文件：
+准备包含以下列的Excel文件：
 ```
-question_id    | 问题ID (必填) - 问题的唯一标识符
-question_type  | 问题类型 (可选) - 如"票务咨询"、"展厅介绍"等  
-question_text  | 问题内容 (必填) - 用户的具体问题
-context        | 对话上下文 (可选) - JSON格式的历史对话
+question_id    | 问题ID
+question_type  | 问题类型  
+question_text  | 问题内容
+context        | 对话上下文 (JSON格式，可选)
 ```
-
-**🎯 测试集示例内容：**
-`test_set_example.xls` 包含了以下类型的测试问题：
-- 🎫 **票务相关**：门票价格、购票方式、优惠政策
-- 🏛️ **展厅介绍**：常设展厅、特色展览、参观路线
-- 🎬 **影院信息**：电影排期、座位预约、票价查询
-- 🍽️ **配套服务**：餐饮、购物、停车等便民信息
-- 📅 **活动咨询**：科普活动、研学课程、预约报名
 
 #### 步骤2: 数据处理
 1. 访问Web界面
@@ -286,19 +269,15 @@ agent-assessment/
 ├── 🧠 assess.py              # AI质量评估系统
 ├── 🔌 coze-bot-core.js       # Coze API核心模块
 ├── 🔑 get-token.js           # 自动令牌刷新
-├── ⚙️ .env                   # 环境配置文件 (需要创建)
-├── 📋 .env.example           # 环境配置模板
-├── 📊 test_set_example.xls   # 测试数据集示例
+├── ⚙️ .env                   # 环境配置文件
 ├── 📦 package.json           # Node.js依赖配置
 ├── 📋 README.md              # 项目文档
-├── 🔒 SECURITY_ASSESSMENT.md # 安全评估报告
 ├── 📁 public/
 │   └── 🌐 index.html         # Web管理界面
-├── 📁 data/
-│   ├── 📂 output/            # 处理结果输出目录
-│   └── 📄 .gitkeep           # Git目录占位符
-└── 📁 uploads/               # 临时文件上传目录
-```
+└── 📁 data/
+    ├── 📂 output/            # 处理结果输出目录
+    └── 📄 .gitkeep           # Git目录占位符
+ ```
 
 ## 🤝 开发指南
 
@@ -324,42 +303,18 @@ const evaluationCriteria = {
 };
 ```
 
-## ⚠️ 重要安全提醒
-
-### 🔑 配置文件安全
-1. **复制配置模板**：`cp .env.example .env`
-2. **填入真实API密钥**：编辑 `.env` 文件
-3. **保护配置文件**：`chmod 600 .env`
-4. **绝不要提交**：`.env` 文件已在 `.gitignore` 中被排除
-5. **定期轮换密钥**：建议每3个月更换一次API密钥
-
-### 🛡️ 部署安全建议
-- 在生产环境中启用HTTPS
-- 使用防火墙限制访问IP范围
-- 定期更新依赖包：`npm audit fix`
-- 监控API使用量，防止异常调用
-
 ## 📞 技术支持
 
 ### 常见问题排查
-1. **配置问题**：确认 `.env` 文件存在且配置正确
-2. **API调用失败**：检查网络连接和API密钥有效性
-3. **Excel处理错误**：参考 `test_set_example.xls` 确认文件格式
-4. **评估超时**：调整并发线程数和网络超时设置
-5. **内存不足**：处理大文件时可能需要增加系统内存
+1. **API调用失败**：检查网络连接和API密钥配置
+2. **Excel处理错误**：确认文件格式和列名正确性
+3. **评估超时**：调整并发线程数和网络超时设置
+4. **内存不足**：处理大文件时可能需要增加系统内存
 
-### 快速测试
-```bash
-# 使用提供的测试集进行快速功能验证
-# 1. 启动服务
-npm start
-
-# 2. 访问 http://localhost:3000
-# 3. 上传 test_set_example.xls
-# 4. 查看处理和评估结果
-```
-
-
+### 获取帮助
+- 📧 **邮件支持**：tech-support@museum.com
+- 💬 **在线文档**：[项目Wiki](https://github.com/your-repo/wiki)
+- 🐛 **问题报告**：[GitHub Issues](https://github.com/your-repo/issues)
 
 ## 📄 开源协议
 
