@@ -462,7 +462,10 @@ def main():
 
     # 确保data目录存在
     os.makedirs('data', exist_ok=True)
-    output_csv = f"data/results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    # 创建输出目录
+    output_dir = "data/output"
+    os.makedirs(output_dir, exist_ok=True)
+    output_csv = f"{output_dir}/results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
 
     print("=" * 60)
     print("Coze Bot 数据集处理程序")

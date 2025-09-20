@@ -114,6 +114,48 @@ function broadcastLog(type, message) {
   });
 }
 
+// 1.5. 上传CSV文件用于评估
+app.post('/api/upload-csv', upload.single('csvFile'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: '没有上传CSV文件' });
+    }
+
+    console.log('收到CSV文件:', req.file.originalname);
+    
+    // 创建临时文件路径
+    const tempPath = path.join(__dirname, 'temp_' + Date.now() + '_' + req.file.originalname);
+    
+    try {
+      // 将内存中的文件写入临时文件
+      await fs.writeFile(tempPath, req.file.buffer);
+      
+      res.json({
+        success: true,
+        message: 'CSV文件上传成功',
+        filePath: tempPath,
+        originalName: req.file.originalname
+      });
+      
+    } catch (writeError) {
+      console.error('写入临时文件失败:', writeError);
+      res.status(500).json({
+        success: false,
+        message: '写入临时文件失败',
+        error: writeError.message
+      });
+    }
+
+  } catch (error) {
+    console.error('CSV上传异常:', error);
+    res.status(500).json({
+      success: false,
+      message: 'CSV上传异常',
+      error: error.message
+    });
+  }
+});
+
 // 2. 上传Excel并处理
 app.post('/api/process-excel', upload.single('excelFile'), async (req, res) => {
   try {
@@ -225,8 +267,8 @@ app.post('/api/process-excel', upload.single('excelFile'), async (req, res) => {
       
       if (code === 0) {
         broadcastLog('success', 'Python脚本执行完成');
-        // 扫描data目录找到最新的results_*.csv文件
-        const dataDir = 'data/';
+        // 扫描data/output目录找到最新的results_*.csv文件
+        const dataDir = 'data/output/';
         fs.readdir(dataDir)
           .then((files) => {
             const resultsFiles = files.filter(file => file.startsWith('results_') && file.endsWith('.csv'));
@@ -417,17 +459,30 @@ app.post('/api/run-assessment', async (req, res) => {
 // 获取文件列表
 app.get('/api/files', async (req, res) => {
   try {
-    const dataDir = 'data/';
-    const files = await fs.readdir(dataDir);
-    const csvFiles = files.filter(file => file.endsWith('.csv'));
+    const dataDirs = ['data/', 'data/output/'];
+    let allFiles = [];
+
+    for (const dataDir of dataDirs) {
+      try {
+        const files = await fs.readdir(dataDir);
+        const csvFiles = files.filter(file => file.endsWith('.csv'));
+        
+        const dirFiles = csvFiles.map(file => ({
+          name: file,
+          path: path.join(dataDir, file),
+          size: 0 // 可以后续添加文件大小
+        }));
+        
+        allFiles = allFiles.concat(dirFiles);
+      } catch (dirError) {
+        // 如果目录不存在，继续处理其他目录
+        console.log(`目录 ${dataDir} 不存在或无法访问`);
+      }
+    }
 
     res.json({
       success: true,
-      files: csvFiles.map(file => ({
-        name: file,
-        path: path.join(dataDir, file),
-        size: 0 // 可以后续添加文件大小
-      }))
+      files: allFiles
     });
   } catch (error) {
     res.status(500).json({

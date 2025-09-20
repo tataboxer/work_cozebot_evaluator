@@ -455,12 +455,16 @@
             min-height: 500px;
             overflow-y: auto;
             overflow-x: auto;
+            position: relative;
         }
 
         #csvTable {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.9rem;
+            table-layout: fixed;
+            /* 确保表格在容器中正确滚动 */
+            margin: 0;
         }
 
         #csvTable th {
@@ -472,13 +476,78 @@
             border-bottom: 2px solid #dee2e6;
             position: sticky;
             top: 0;
-            z-index: 10;
+            z-index: 100;
+            user-select: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+            /* 确保表头冻结效果 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #csvTable th.sortable:hover {
+            background: #e9ecef;
+        }
+
+        #csvTable th.sortable::after {
+            content: '⇅';
+            float: right;
+            opacity: 0.5;
+            margin-left: 5px;
+        }
+
+        #csvTable th.sortable.sort-asc::after {
+            content: '↑';
+            opacity: 1;
+            color: #007bff;
+        }
+
+        #csvTable th.sortable.sort-desc::after {
+            content: '↓';
+            opacity: 1;
+            color: #007bff;
         }
 
         #csvTable td {
             padding: 10px 8px;
             border-bottom: 1px solid #f0f0f0;
             vertical-align: top;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 列调整器样式 */
+        .column-resizer {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 5px;
+            height: 100%;
+            cursor: col-resize;
+            background: transparent;
+            z-index: 101;
+        }
+
+        .column-resizer:hover {
+            background: #007bff;
+        }
+
+        .column-resizer.resizing {
+            background: #007bff;
+        }
+
+        /* 单元格悬停显示完整内容 */
+        #csvTable td:hover,
+        #csvTable th:hover {
+            overflow: visible;
+            white-space: normal;
+            word-wrap: break-word;
+            z-index: 12;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            max-width: 300px;
         }
 
         #csvTable tr:hover {
@@ -515,12 +584,12 @@
 
         /* 文本截断样式 */
         .text-truncate {
-            max-width: 200px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             cursor: pointer;
             position: relative;
+            width: 100%;
         }
 
         .text-truncate:hover {
@@ -530,6 +599,15 @@
         .text-truncate.expanded {
             white-space: normal;
             max-width: none;
+        }
+
+        /* 自适应文本显示 */
+        .text-adaptive {
+            width: 100%;
+            word-wrap: break-word;
+            white-space: normal;
+            max-height: 150px;
+            overflow-y: auto;
         }
 
         @media (max-width: 768px) {
@@ -610,8 +688,8 @@
                 <!-- 步骤1: 刷新Token -->
                 <div class="step-card">
                     <div class="step-number">1</div>
-                    <h3>🔑 刷新认证Token</h3>
-                    <p>获取最新的业务系统免验证码Token，用于后续coze API传参</p>
+                    <h3>🔑 手动刷新认证Token</h3>
+                    <p>业务系统免验证码Token如过期，可手动刷新</p>
                     <button id="refreshTokenBtn" class="btn">刷新Token</button>
                     <div id="tokenStatus" class="status"></div>
                 </div>
@@ -635,10 +713,13 @@
                     <div class="step-number">3</div>
                     <h3>📊 执行质量评估</h3>
                     <p>使用LLM对助手回复进行专业评估，生成详细的质量报告</p>
-                    <div class="file-list">
-                        <select id="csvSelect">
-                            <option value="">选择要评估的CSV文件</option>
-                        </select>
+                    <div class="file-input">
+                        <input type="file" id="assessmentFileInput" accept=".csv">
+                        <label for="assessmentFileInput">选择CSV文件</label>
+                        <div id="assessmentFileName" style="margin-top: 10px; color: #666;"></div>
+                        <div style="margin-top: 5px; font-size: 12px; color: #999;">
+                            💡 建议选择 data/output/ 目录中的文件
+                        </div>
                     </div>
                     <button id="runAssessmentBtn" class="btn" disabled>开始评估</button>
                     <div id="assessmentStatus" class="status"></div>
@@ -654,7 +735,7 @@
             <div id="csvDisplaySection" class="csv-display-section" style="display: none;">
                 <div class="csv-header">
                     <div class="csv-title">
-                        <h3>📋 评估结果预览</h3>
+                        <h3>📋 结果预览</h3>
                         <div id="csvFileName" class="csv-filename">未选择文件</div>
                     </div>
                     <div class="csv-controls">
@@ -699,7 +780,8 @@
         const processExcelBtn = document.getElementById('processExcelBtn');
         const runAssessmentBtn = document.getElementById('runAssessmentBtn');
         const excelFileInput = document.getElementById('excelFile');
-        const csvSelect = document.getElementById('csvSelect');
+        const assessmentFileInput = document.getElementById('assessmentFileInput');
+        const assessmentFileName = document.getElementById('assessmentFileName');
         const fileName = document.getElementById('fileName');
         const tokenStatus = document.getElementById('tokenStatus');
         const excelStatus = document.getElementById('excelStatus');
@@ -824,6 +906,36 @@
             }
         });
 
+        // 评估文件选择
+        assessmentFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                // 构建文件路径用于预览
+                let csvFilePath;
+                if (file.name.startsWith('results_')) {
+                    csvFilePath = `data/output/${file.name}`;
+                } else {
+                    // 对于非标准文件，先上传再预览
+                    csvFilePath = `data/${file.name}`;
+                }
+                
+                // 清除自动选择的文件状态，使用用户手动选择的文件
+                currentCsvFile = csvFilePath;
+                assessmentFileName.textContent = `已选择: ${file.name}`;
+                runAssessmentBtn.disabled = false;
+                runAssessmentBtn.textContent = '开始评估';
+                addLog('info', `手动选择评估文件: ${file.name}`);
+                
+                // 自动预览手动选择的CSV文件
+                previewCsvFile(csvFilePath, file.name, `正在预览选择的CSV文件: ${file.name}`);
+            } else {
+                assessmentFileName.textContent = '';
+                runAssessmentBtn.disabled = true;
+                addLog('info', '评估文件选择已取消');
+                currentCsvFile = null;
+            }
+        });
+
         // 1. 刷新Token
         refreshTokenBtn.addEventListener('click', async () => {
             addLog('info', '开始刷新Token...');
@@ -885,8 +997,17 @@
                 if (result.success) {
                     showStatus(excelStatus, 'success', `✅ Excel处理成功！输出文件: ${result.outputFile}`);
                     addLog('success', `Excel处理成功: ${result.outputFile}`);
-                    // 刷新文件列表
-                    loadCsvFiles();
+                    
+                    // 自动设置生成的CSV文件到评估文件选择器
+                    const outputFileName = result.outputFile.split('/').pop() || result.outputFile.split('\\').pop();
+                    assessmentFileName.textContent = `已选择: ${outputFileName}`;
+                    runAssessmentBtn.disabled = false;
+                    runAssessmentBtn.textContent = '开始评估';
+                    addLog('info', `已自动选择生成的CSV文件: ${outputFileName}`);
+                    
+                    // 自动加载和预览CSV数据
+                    currentCsvFile = result.outputFile;
+                    previewCsvFile(result.outputFile, outputFileName, '正在预览生成的CSV数据...');
                 } else {
                     showStatus(excelStatus, 'error', `❌ Excel处理失败: ${result.message}`);
                     addLog('error', `Excel处理失败: ${result.message}`);
@@ -902,11 +1023,49 @@
 
         // 3. 执行评估
         runAssessmentBtn.addEventListener('click', async () => {
-            const csvFile = csvSelect.value;
-            if (!csvFile) {
-                showStatus(assessmentStatus, 'error', '❌ 请先选择要评估的CSV文件');
-                addLog('error', '请先选择CSV文件');
-                return;
+            let csvFile;
+            
+            // 检查是否有自动选择的文件（Excel处理后）
+            if (currentCsvFile && assessmentFileName.textContent.includes('已选择:')) {
+                csvFile = currentCsvFile;
+                addLog('info', `使用自动选择的文件: ${csvFile}`);
+            } else {
+                // 使用用户手动选择的文件
+                const file = assessmentFileInput.files[0];
+                if (!file) {
+                    addLog('error', '请先选择要评估的CSV文件');
+                    return;
+                }
+
+                // 假设用户选择的是data/output目录中的文件
+                // 构建正确的文件路径
+                if (file.name.startsWith('results_')) {
+                    csvFile = `data/output/${file.name}`;
+                    addLog('info', `使用data/output目录中的文件: ${file.name}`);
+                } else {
+                    // 如果不是标准格式，上传到临时目录处理
+                    const formData = new FormData();
+                    formData.append('csvFile', file);
+                    
+                    try {
+                        const uploadResponse = await fetch('/api/upload-csv', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const uploadResult = await uploadResponse.json();
+                        if (!uploadResult.success) {
+                            addLog('error', '文件上传失败: ' + uploadResult.message);
+                            return;
+                        }
+                        
+                        csvFile = uploadResult.filePath;
+                        addLog('info', `使用上传的文件: ${file.name}`);
+                    } catch (uploadError) {
+                        addLog('error', '文件上传失败: ' + uploadError.message);
+                        return;
+                    }
+                }
             }
 
             addLog('info', '开始执行评估...');
@@ -917,6 +1076,7 @@
             progressFill.style.width = '0%';
 
             try {
+                // 执行评估API调用
                 const response = await fetch('/api/run-assessment', {
                     method: 'POST',
                     headers: {
@@ -928,20 +1088,21 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    showStatus(assessmentStatus, 'success', '✅ 评估完成！请查看输出文件。');
-                    addLog('success', '评估完成');
+                    addLog('success', '评估完成！');
+                    showStatus(assessmentStatus, 'success', '✅ 评估完成');
                     progressFill.style.width = '100%';
                     
-                    // 评估完成后显示CSV内容
-                    currentCsvFile = csvFile;
-                    loadCsvData(csvFile);
+                    // 评估完成后刷新CSV预览（显示包含评估结果的数据）
+                    const fileName = csvFile.split('/').pop() || csvFile.split('\\').pop();
+                    previewCsvFile(csvFile, fileName, '正在刷新评估结果预览...');
                 } else {
-                    showStatus(assessmentStatus, 'error', `❌ 评估失败: ${result.message}`);
-                    addLog('error', `评估失败: ${result.message}`);
+                    addLog('error', '评估失败: ' + result.message);
+                    showStatus(assessmentStatus, 'error', '❌ 评估失败');
                 }
+
             } catch (error) {
-                showStatus(assessmentStatus, 'error', `❌ 网络错误: ${error.message}`);
-                addLog('error', `网络错误: ${error.message}`);
+                addLog('error', '评估请求失败: ' + error.message);
+                showStatus(assessmentStatus, 'error', '❌ 评估请求失败');
             } finally {
                 runAssessmentBtn.disabled = false;
                 runAssessmentBtn.textContent = '开始评估';
@@ -951,30 +1112,8 @@
             }
         });
 
-        // 加载CSV文件列表
-        async function loadCsvFiles() {
-            try {
-                const response = await fetch('/api/files');
-                const result = await response.json();
 
-                if (result.success) {
-                    csvSelect.innerHTML = '<option value="">选择要评估的CSV文件</option>';
-                    result.files.forEach(file => {
-                        const option = document.createElement('option');
-                        option.value = file.path;
-                        option.textContent = file.name;
-                        csvSelect.appendChild(option);
-                    });
-
-                    if (result.files.length > 0) {
-                        runAssessmentBtn.disabled = false;
-                    }
-                }
-            } catch (error) {
-                addLog('error', `加载文件列表失败: ${error.message}`);
-                console.error('加载文件列表失败:', error);
-            }
-        }
+        // 这个函数已经不再需要，因为现在使用文件选择器
 
         // 显示状态信息
         function showStatus(element, type, message) {
@@ -992,7 +1131,6 @@
 
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', () => {
-            loadCsvFiles();
             // 自动连接SSE以接收实时日志
             connectSSE();
         });
@@ -1005,8 +1143,17 @@
             }
         });
 
-        // 定期刷新文件列表（每30秒）
-        setInterval(loadCsvFiles, 30000);
+        // 不再需要定期刷新文件列表，因为现在使用文件选择器
+
+        // 统一的CSV预览函数
+        function previewCsvFile(filePath, fileName, logMessage) {
+            if (!filePath) return;
+            
+            setTimeout(() => {
+                loadCsvData(filePath);
+                addLog('info', logMessage || `正在预览CSV文件: ${fileName}`);
+            }, 500);
+        }
 
         // CSV数据相关函数
         async function loadCsvData(csvFile) {
@@ -1090,59 +1237,30 @@
                 const columns = Object.keys(data[0]);
                 csvTableHead.innerHTML = `
                     <tr>
-                        ${columns.map(col => `<th>${col}</th>`).join('')}
+                        ${columns.map((col, index) => {
+                            const isSortable = isSortableColumn(col);
+                            return `
+                                <th style="width: ${getColumnWidth(col)}px;" 
+                                    class="${isSortable ? 'sortable' : ''}"
+                                    data-column="${col}"
+                                    data-sort="none">
+                                    ${col}
+                                    <div class="column-resizer" data-column="${index}"></div>
+                                </th>
+                            `;
+                        }).join('')}
                     </tr>
                 `;
+                
+                // 添加列调整事件监听器
+                initColumnResizers();
+                
+                // 添加排序事件监听器
+                initColumnSorting();
             }
 
             // 创建表格内容
-            csvTableBody.innerHTML = filteredData.map(row => {
-                const cells = Object.keys(row).map(key => {
-                    let value = row[key] || '';
-                    let cellClass = '';
-                    
-                    // 为评估分数列添加颜色样式
-                    if (key.includes('_分数') && value) {
-                        cellClass = `score-cell score-${value}`;
-                    }
-                    
-                    // 转换换行符转义字符为HTML换行
-                    if (typeof value === 'string') {
-                        // 处理CSV中的双反斜杠转义：\\n -> <br>
-                        value = value.replace(/\\\\n/g, '<br>');
-                        
-                        // 特殊处理context列：格式化JSON显示
-                        if (key === 'context' && value && value.trim() && value !== '<br>') {
-                            try {
-                                // 现在context应该是标准JSON数组格式
-                                const jsonData = JSON.parse(value.replace(/<br>/g, '\n'));
-                                
-                                if (Array.isArray(jsonData) && jsonData.length > 0) {
-                                    // 格式化为可读的对话历史
-                                    const formatted = jsonData.map((msg, index) => {
-                                        const role = msg.role === 'user' ? '用户' : '助手';
-                                        const content = msg.content || '';
-                                        return `${index + 1}. ${role}: ${content}`;
-                                    }).join('<br>');
-                                    value = formatted;
-                                }
-                            } catch (e) {
-                                // 解析失败时保持原样
-                                console.warn('Context解析失败:', e);
-                            }
-                        }
-                    }
-                    
-                    // 为长文本添加截断样式
-                    if (typeof value === 'string' && value.replace(/<br>/g, '\n').length > 50) {
-                        return `<td class="${cellClass}"><div class="text-truncate" onclick="toggleText(this)" title="点击展开/收起">${value}</div></td>`;
-                    }
-                    
-                    return `<td class="${cellClass}">${value}</td>`;
-                }).join('');
-                
-                return `<tr>${cells}</tr>`;
-            }).join('');
+            renderTableBody(filteredData);
 
             // 更新统计信息
             updateCsvStats(data, filteredData);
@@ -1230,6 +1348,243 @@
         // 文本展开/收起功能
         function toggleText(element) {
             element.classList.toggle('expanded');
+        }
+
+        // 获取列的默认宽度
+        function getColumnWidth(columnName) {
+            const widthMap = {
+                'question_id': 40,
+                'question_type': 60,
+                'question_text': 220,
+                'context': 150,
+                'chatid': 50,
+                'block_type': 50,
+                'block_subtype': 80,
+                'block_result': 500,  // 增加回答内容列的默认宽度
+                'block_start': 55,
+                'block_end': 55,
+                '最终准确率_分数': 80,
+                '最终准确率_理由': 150,  // 增加评估理由列的默认宽度
+                '专业度_分数': 80,
+                '专业度_理由': 150,     // 增加评估理由列的默认宽度
+                '语气合理_分数': 80,
+                '语气合理_理由': 150    // 增加评估理由列的默认宽度
+            };
+            return widthMap[columnName] || 150; // 默认宽度
+        }
+
+        // 判断列是否可排序
+        function isSortableColumn(columnName) {
+            const sortableColumns = [
+                'block_start',
+                'block_end', 
+                '最终准确率_分数',
+                '专业度_分数',
+                '语气合理_分数'
+            ];
+            return sortableColumns.includes(columnName);
+        }
+
+        // 初始化列排序功能
+        function initColumnSorting() {
+            const sortableHeaders = csvTableHead.querySelectorAll('th.sortable');
+            
+            sortableHeaders.forEach(header => {
+                header.addEventListener('click', (e) => {
+                    // 阻止点击调整器时的排序
+                    if (e.target.classList.contains('column-resizer')) {
+                        return;
+                    }
+                    
+                    const columnName = header.dataset.column;
+                    const currentSort = header.dataset.sort;
+                    
+                    // 清除其他列的排序状态
+                    sortableHeaders.forEach(h => {
+                        if (h !== header) {
+                            h.dataset.sort = 'none';
+                            h.classList.remove('sort-asc', 'sort-desc');
+                        }
+                    });
+                    
+                    // 切换当前列的排序状态
+                    let newSort;
+                    if (currentSort === 'none' || currentSort === 'desc') {
+                        newSort = 'asc';
+                    } else {
+                        newSort = 'desc';
+                    }
+                    
+                    header.dataset.sort = newSort;
+                    header.classList.remove('sort-asc', 'sort-desc');
+                    header.classList.add(`sort-${newSort}`);
+                    
+                    // 执行排序
+                    sortTableData(columnName, newSort);
+                    
+                    addLog('info', `按 ${columnName} 列进行${newSort === 'asc' ? '升序' : '降序'}排序`);
+                });
+            });
+        }
+
+        // 排序表格数据
+        function sortTableData(columnName, direction) {
+            if (!currentCsvData || currentCsvData.length === 0) return;
+            
+            // 应用过滤器
+            const filterValue = subtypeFilter.value;
+            let filteredData = [...currentCsvData];
+            
+            if (filterValue !== 'all') {
+                filteredData = currentCsvData.filter(row => row.block_subtype === filterValue);
+            }
+            
+            // 排序数据
+            filteredData.sort((a, b) => {
+                let valueA = a[columnName];
+                let valueB = b[columnName];
+                
+                // 处理数值类型
+                if (columnName === 'block_start' || columnName === 'block_end' || 
+                    columnName.includes('_分数')) {
+                    valueA = parseFloat(valueA) || 0;
+                    valueB = parseFloat(valueB) || 0;
+                }
+                
+                // 处理空值
+                if (valueA === null || valueA === undefined || valueA === '') valueA = direction === 'asc' ? Infinity : -Infinity;
+                if (valueB === null || valueB === undefined || valueB === '') valueB = direction === 'asc' ? Infinity : -Infinity;
+                
+                if (direction === 'asc') {
+                    return valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
+                } else {
+                    return valueA > valueB ? -1 : valueA < valueB ? 1 : 0;
+                }
+            });
+            
+            // 重新渲染表格内容（只重新渲染tbody，保持表头不变）
+            renderTableBody(filteredData);
+            
+            // 更新统计信息
+            updateCsvStats(currentCsvData, filteredData);
+        }
+
+        // 渲染表格主体
+        function renderTableBody(data) {
+            csvTableBody.innerHTML = data.map(row => {
+                const cells = Object.keys(row).map(key => {
+                    let value = row[key] || '';
+                    let cellClass = '';
+                    
+                    // 为评估分数列添加颜色样式
+                    if (key.includes('_分数') && value) {
+                        cellClass = `score-cell score-${value}`;
+                    }
+                    
+                    // 转换换行符转义字符为HTML换行
+                    if (typeof value === 'string') {
+                        // 处理CSV中的双反斜杠转义：\\n -> <br>
+                        value = value.replace(/\\\\n/g, '<br>');
+                        
+                        // 特殊处理context列：格式化JSON显示
+                        if (key === 'context' && value && value.trim() && value !== '<br>') {
+                            try {
+                                // 现在context应该是标准JSON数组格式
+                                const jsonData = JSON.parse(value.replace(/<br>/g, '\n'));
+                                
+                                if (Array.isArray(jsonData) && jsonData.length > 0) {
+                                    // 格式化为可读的对话历史
+                                    const formatted = jsonData.map((msg, index) => {
+                                        const role = msg.role === 'user' ? '用户' : '助手';
+                                        const content = msg.content || '';
+                                        return `${index + 1}. ${role}: ${content}`;
+                                    }).join('<br>');
+                                    value = formatted;
+                                }
+                            } catch (e) {
+                                // 解析失败时保持原样
+                                console.warn('Context解析失败:', e);
+                            }
+                        }
+                    }
+                    
+                    // 为长文本添加合适的显示样式
+                    if (typeof value === 'string' && value.replace(/<br>/g, '\n').length > 50) {
+                        // 对于特定的长文本列，使用自适应显示
+                        if (key === 'block_result' || key.includes('_理由')) {
+                            return `<td class="${cellClass}"><div class="text-adaptive" title="内容较长，已自动换行">${value}</div></td>`;
+                        } else {
+                            return `<td class="${cellClass}"><div class="text-truncate" onclick="toggleText(this)" title="点击展开/收起">${value}</div></td>`;
+                        }
+                    }
+                    
+                    return `<td class="${cellClass}">${value}</td>`;
+                }).join('');
+                
+                return `<tr>${cells}</tr>`;
+            }).join('');
+        }
+
+        // 初始化列调整器
+        function initColumnResizers() {
+            const resizers = document.querySelectorAll('.column-resizer');
+            let isResizing = false;
+            let currentResizer = null;
+            let startX = 0;
+            let startWidth = 0;
+
+            resizers.forEach(resizer => {
+                resizer.addEventListener('mousedown', (e) => {
+                    isResizing = true;
+                    currentResizer = resizer;
+                    startX = e.clientX;
+                    
+                    const columnIndex = parseInt(resizer.dataset.column);
+                    const th = csvTableHead.querySelector(`th:nth-child(${columnIndex + 1})`);
+                    startWidth = th.offsetWidth;
+                    
+                    resizer.classList.add('resizing');
+                    document.body.style.cursor = 'col-resize';
+                    
+                    e.preventDefault();
+                });
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing || !currentResizer) return;
+                
+                const diff = e.clientX - startX;
+                const newWidth = Math.max(50, startWidth + diff); // 最小宽度50px
+                
+                const columnIndex = parseInt(currentResizer.dataset.column);
+                const th = csvTableHead.querySelector(`th:nth-child(${columnIndex + 1})`);
+                
+                if (th) {
+                    th.style.width = newWidth + 'px';
+                    
+                    // 同时更新所有相应的td
+                    const rows = csvTableBody.querySelectorAll('tr');
+                    rows.forEach(row => {
+                        const td = row.querySelector(`td:nth-child(${columnIndex + 1})`);
+                        if (td) {
+                            td.style.width = newWidth + 'px';
+                        }
+                    });
+                }
+                
+                e.preventDefault();
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    if (currentResizer) {
+                        currentResizer.classList.remove('resizing');
+                        currentResizer = null;
+                    }
+                    document.body.style.cursor = 'default';
+                }
+            });
         }
 
         // 过滤器事件监听
