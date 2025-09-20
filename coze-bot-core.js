@@ -19,39 +19,106 @@ const DEFAULT_ACCESS_TOKEN = process.env.ACCESS_TOKEN ;
  * @param {function} callback - 回调函数（可选，用于获取结果）
  */
 function testStreamingResponse(content = DEFAULT_CONTENT, accessToken = DEFAULT_ACCESS_TOKEN, apiToken = DEFAULT_COZE_API_TOKEN, botId = DEFAULT_BOT_ID, callback = null) {
-  console.log('\n\n='.repeat(60));
+  // Only print separator when running as main module
+  if (require.main === module) {
+    console.log('\n\n='.repeat(6));
+  }
 
   // 从命令行参数获取参数
+  // 新的参数顺序: content, contextJson, accessToken, apiToken, botId
   if (process.argv.length > 2) {
     content = process.argv[2];
   }
-  if (process.argv.length > 3) {
-    accessToken = process.argv[3];
+  
+  // 新增：从命令行参数获取上下文JSON（第3个参数）
+  let contextFromArgs = null;
+  if (process.argv.length > 3 && process.argv[3] && process.argv[3] !== '') {
+    try {
+      // 尝试解析JSON，如果失败则提供更详细的错误信息
+      const jsonString = process.argv[3];
+      console.log(`🔍 尝试解析JSON字符串长度: ${jsonString.length}`);
+      contextFromArgs = JSON.parse(jsonString);
+      console.log(`📋 从命令行参数获取上下文: ${contextFromArgs.length} 条消息`);
+    } catch (error) {
+      console.log(`⚠️ 命令行上下文解析失败: ${error.message}`);
+      console.log(`📝 建议: 确保JSON字符串正确转义，或考虑使用文件方式传递上下文`);
+      console.log(`💡 示例: node coze-bot-core.js "问题" '[]' 或使用环境变量COZE_CONTEXT`);
+    }
   }
+  
   if (process.argv.length > 4) {
-    apiToken = process.argv[4];
+    accessToken = process.argv[4];
   }
   if (process.argv.length > 5) {
-    botId = process.argv[5];
+    apiToken = process.argv[5];
+  }
+  if (process.argv.length > 6) {
+    botId = process.argv[6];
   }
 
   // 记录请求开始时间
   const startTime = Date.now();
   console.log(`开始测试流式响应... (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
   
+  // 准备对话消息 - 优先使用命令行参数，然后是COZE_CONTEXT，最后是简单模式
+  let additionalMessages = [];
+  let contextMessages = null;
+  
+  // 1. 优先使用命令行参数的上下文
+  if (contextFromArgs && contextFromArgs.length > 0) {
+    contextMessages = contextFromArgs;
+    console.log(`📋 使用命令行上下文: ${contextMessages.length} 条历史消息`);
+  }
+  // 2. 其次使用环境变量的上下文
+  else {
+    try {
+      const contextConfig = process.env.COZE_CONTEXT;
+      if (contextConfig && contextConfig.trim() && contextConfig !== '[]') {
+        contextMessages = JSON.parse(contextConfig);
+        console.log(`📋 使用环境变量上下文: ${contextMessages.length} 条历史消息`);
+      }
+    } catch (error) {
+      console.log(`⚠️ 环境变量上下文解析失败: ${error.message}`);
+    }
+  }
+  
+  // 构建最终的消息数组
+  if (contextMessages && contextMessages.length > 0) {
+    // 上下文模式 - 历史消息 + 当前问题
+    additionalMessages = [
+      ...contextMessages,  // 历史上下文
+      {
+        "role": "user",
+        "content": content,
+        "content_type": "text"
+      }
+    ];
+    console.log(`🎯 当前问题: ${content}`);
+    
+    // 打印上下文内容用于验证
+    console.log(`🔍 上下文内容:`);
+    contextMessages.forEach((msg, index) => {
+      console.log(`  ${index + 1}. [${msg.role}] ${msg.content || msg.content_type || 'No content'}`);
+    });
+  } else {
+    // 简单模式 - 只传当前问题
+    additionalMessages = [
+      {
+        "role": "user",
+        "content": content,
+        "content_type": "text"
+      }
+    ];
+    console.log(`💬 使用简单模式: 单独问答`);
+  }
+
   // 准备请求数据 - 使用流式响应
   const requestData = {
     "bot_id": botId,
     "user_id": "Leo",
     "stream": true, // 使用流式响应
     "auto_save_history": true,
-    "additional_messages": [
-      {
-        "role": "user",
-        "content": content,
-        "content_type": "text"
-      }
-    ],
+    "additional_messages": additionalMessages,
     "chat_id": null,
     "conversation_id": null,
     "workflow_id": null,
@@ -185,6 +252,12 @@ function testStreamingResponse(content = DEFAULT_CONTENT, accessToken = DEFAULT_
 
     res.on('end', () => {
       console.log(`\n✅ 流式响应测试完成！ (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
+
+      // 验证additional_messages的内容
+      console.log('\n🔍 验证additional_messages内容:');
+      requestData.additional_messages.forEach((msg, index) => {
+        console.log(`  消息 ${index + 1}: [${msg.role}] ${msg.content || msg.content_type || 'No content'}`);
+      });
 
       // 收集和输出分析结果
       const results = [];

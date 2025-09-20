@@ -18,23 +18,54 @@ load_dotenv()
 # 创建全局锁保护CSV写入
 csv_lock = threading.Lock()
 
-def evaluate_with_llm(question, answer):
+def parse_context_simple(context_str):
+    """简单解析context字符串为Python对象"""
+    if not context_str or context_str.strip() == '':
+        return None
+    
+    try:
+        # 直接解析JSON数组（现在数据生成时已经是标准格式）
+        context_data = json.loads(context_str)
+        return context_data if isinstance(context_data, list) else None
+    except json.JSONDecodeError as e:
+        print(f"⚠️ Context解析失败: {e}")
+        return None
+
+def evaluate_with_llm(question, answer, context=None):
     """调用LLM API进行评估"""
+
+    # 构建上下文信息
+    context_text = ""
+    if context:
+        context_data = None
+        if isinstance(context, str):
+            context_data = parse_context_simple(context)
+        elif isinstance(context, list):
+            context_data = context
+        
+        if context_data and len(context_data) > 0:
+            context_text = "\n对话历史:\n"
+            for i, msg in enumerate(context_data):
+                role = "用户" if msg.get('role') == 'user' else "助手"
+                content = msg.get('content', '')
+                context_text += f"{i+1}. {role}: {content}\n"
+            context_text += "\n"
 
     prompt = f"""你是一个专业的AI评估专家，现在需要评估苏州科技馆数字人助手趣波（QuBoo）的回复质量。
 
 背景：趣波是苏州科技馆的AI智能助手，专门为游客提供科技馆参观、票务、展厅、活动等相关信息和服务，帮助游客获得优质的科技体验。
 
-请从以下三个角度评估回复质量：
-
-1. 最终准确率：回复内容是否准确回答了用户问题，是否解决了用户的查询需求，是否与科技馆业务目标高度贴合。评分1-100分（5分最高）。
-
-2. 专业度：用词是否精准、术语是否正确、业务上下文是否符合科技馆场景的专业水准。评分1-100分（5分最高）。
-
-3. 语气合理：语气是否礼貌友好、风格是否匹配科技馆数字助手场景（亲切、引导性、专业但不生硬）。评分1-100分（5分最高）。
-
+对话历史: {context_text}
 用户问题: {question}
 助手回复: {answer}
+
+请从以下三个角度评估回复质量：
+
+1. 最终准确率：回复内容是否准确回答了用户问题，是否解决了用户的查询需求，是否与科技馆业务目标高度贴合。{"考虑上下文连贯性，但不需要评判对话历史用assistant的回复" if context_text else ""} 评分1-100分。
+
+2. 专业度：用词是否精准、术语是否正确、业务上下文是否符合科技馆场景的专业水准。评分1-100分。
+
+3. 语气合理：语气是否礼貌友好、风格是否匹配科技馆数字助手场景（亲切、引导性、专业但不生硬）。评分1-100分。
 
 请以JSON格式输出评估结果：
 {{
@@ -108,20 +139,33 @@ def process_single_row(row_data, csv_file_path):
     index, row = row_data
     question = str(row['question_text'])
     answer = str(row['block_result'])
+    
+    # 获取上下文数据
+    context = None
+    if 'context' in row and pd.notna(row['context']) and str(row['context']).strip():
+        context = str(row['context'])
 
     # 跳过空内容
     if not answer or answer.strip() == '':
         print(f"跳过第{index+1}行: 回复内容为空")
         return {'index': index, 'success': False, 'error': '空内容'}
 
-    print(f"\n[{index+1}] 正在处理问题: {question[:30]}{'...' if len(question) > 30 else ''}")
+    # 显示context信息
+    context_info = " (无上下文)"
+    if context:
+        context_data = parse_context_simple(context)
+        if context_data and isinstance(context_data, list):
+            context_info = f" (含{len(context_data)}条上下文)"
+        else:
+            context_info = " (上下文格式错误)"
+    print(f"\n[{index+1}] 正在处理问题: {question[:30]}{'...' if len(question) > 30 else ''}{context_info}")
 
     # 添加随机延时避免API限流（1-3秒）
     delay = 1 + (index % 3)
     time.sleep(delay)
 
     # 调用LLM评估
-    evaluation = evaluate_with_llm(question, answer)
+    evaluation = evaluate_with_llm(question, answer, context)
 
     if evaluation:
         try:

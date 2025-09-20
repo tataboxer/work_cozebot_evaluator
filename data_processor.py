@@ -27,7 +27,7 @@ except ImportError:
     print("警告: 未安装 xlrd，将无法读取 .xls 文件")
     print("安装命令: pip install xlrd")
 
-def call_coze_bot(content, access_token=None, api_token=None, bot_id=None):
+def call_coze_bot(content, context=None):
     """调用coze-bot-core.js并返回结果"""
     try:
         # 确保content是字符串类型
@@ -36,22 +36,19 @@ def call_coze_bot(content, access_token=None, api_token=None, bot_id=None):
 
         print(f"准备调用Node.js，内容: {content[:50]}{'...' if len(content) > 50 else ''}")
 
-        # 构建命令参数
-        cmd_args = ['node', 'coze-bot-core.js', content]
-
-        # 添加可选参数
-        if access_token:
-            cmd_args.append(access_token)
-        if api_token:
-            cmd_args.append(api_token)
-        if bot_id:
-            cmd_args.append(bot_id)
-
-        print(f"最终命令: {' '.join(cmd_args)}")
-
+        # 构建命令参数 - 简化版本，只传content和context
+        if context:
+            # 有上下文模式
+            context_json = json.dumps(context, ensure_ascii=False)
+            actual_cmd_args = ['node', 'coze-bot-core.js', content, context_json]
+            
+        else:
+            # 无上下文模式
+            actual_cmd_args = ['node', 'coze-bot-core.js', content]
+            
         # 调用Node.js脚本
         result = subprocess.run(
-            cmd_args,
+            actual_cmd_args,
             capture_output=True,
             text=True,
             encoding='utf-8',
@@ -105,6 +102,26 @@ def parse_bot_output(output):
             if chat_id_part != '未获取到':
                 chat_id = chat_id_part
             break
+
+    # 查找并打印验证additional_messages内容
+    print("\n🔍 从bot输出中提取验证信息:")
+    verification_started = False
+    for line in lines:
+        if '🔍 验证additional_messages内容' in line or '验证additional_messages内容' in line:
+            verification_started = True
+            print(f"   {line.strip()}")
+        elif verification_started and ('消息 ' in line and ('[user]' in line or '[assistant]' in line)):
+            print(f"   {line.strip()}")
+        elif verification_started and line.strip() and not line.startswith('发送流式请求数据') and not line.startswith('请求开始时间'):
+            # 继续打印相关的验证信息，直到遇到其他部分
+            if any(keyword in line for keyword in ['🎯 当前问题', '🔍 上下文内容', '📋 使用', '💬 使用简单模式']):
+                print(f"   {line.strip()}")
+            elif line.startswith('  ') and ('.' in line and '[' in line and ']' in line):
+                # 打印消息列表格式的行，如 "  1. [user] 内容"
+                print(f"   {line.strip()}")
+            elif '发送流式请求数据' in line:
+                # 遇到请求数据部分就停止
+                break
 
     current_segment = None
     collecting_content = False
@@ -173,26 +190,86 @@ def parse_bot_output(output):
 
     return segments, chat_id
 
+def parse_context_data(context_str):
+    """解析上下文数据，支持多种格式"""
+    if not context_str or pd.isna(context_str):
+        return None
+    
+    context_str = str(context_str).strip()
+    if not context_str:
+        return None
+    
+    try:
+        # 尝试1: 解析为JSON数组 [{"role":"user",...},{"role":"assistant",...}]
+        context_messages = json.loads(context_str)
+        if isinstance(context_messages, list):
+            print(f"✅ 成功解析JSON数组格式: {len(context_messages)} 条消息")
+            return context_messages
+    except json.JSONDecodeError:
+        pass
+    
+    try:
+        # 尝试2: 解析逗号分隔的JSON对象 {"role":"user",...},{"role":"assistant",...}
+        # 添加方括号使其成为有效的JSON数组
+        if not context_str.startswith('[') and '},{' in context_str:
+            fixed_context = '[' + context_str + ']'
+            context_messages = json.loads(fixed_context)
+            print(f"✅ 成功解析逗号分隔JSON格式: {len(context_messages)} 条消息")
+            return context_messages
+    except json.JSONDecodeError:
+        pass
+    
+    try:
+        # 尝试3: 按行解析JSONL格式
+        lines = context_str.strip().split('\n')
+        context_messages = []
+        for line in lines:
+            line = line.strip()
+            if line:
+                context_messages.append(json.loads(line))
+        if context_messages:
+            print(f"✅ 成功解析JSONL格式: {len(context_messages)} 条消息")
+            return context_messages
+    except json.JSONDecodeError:
+        pass
+    
+    print(f"❌ 上下文解析失败，无法识别格式: {context_str[:100]}...")
+    return None
+
 def process_single_row(row_data, output_file):
     """处理单行数据的函数（用于并发处理）"""
     idx, row = row_data
     question_id = str(row['question_id'])
     question_type = str(row['question_type'])
     question_text = str(row['question_text'])
+    
+    # 检查是否有context列
+    context_data = None
+    context_str = ""
+    if 'context' in row:
+        raw_context = str(row['context']) if pd.notna(row['context']) else ""
+        if raw_context and raw_context != 'nan':
+            # 解析context数据
+            context_data = parse_context_data(raw_context)
+            # 将解析后的数据转换为标准JSON数组格式存储
+            if context_data:
+                context_str = json.dumps(context_data, ensure_ascii=False)
+            else:
+                context_str = ""
+        else:
+            context_str = ""
 
     print(f"📝 处理第 {idx+1} 行: {question_id}")
     print(f"   问题类型: {question_type}")
     print(f"   问题内容: {question_text[:100]}{'...' if len(question_text) > 100 else ''}")
+    if context_data:
+        print(f"   📚 上下文: {len(context_data)} 条历史消息")
 
     # 调用bot
-    result = call_coze_bot(question_text)
+    result = call_coze_bot(question_text, context_data)
 
     records_count = 0
     if result['success'] and result['output']:
-        # 添加调试：显示原始输出内容
-        print(f"   🔍 Coze原始输出 (前300字符):")
-        print(f"   {result['output'][:300]}{'...' if len(result['output']) > 300 else ''}")
-        
         # 解析bot输出
         segments, chat_id = parse_bot_output(result['output'])
 
@@ -204,15 +281,12 @@ def process_single_row(row_data, output_file):
         
         # 为每个分段创建记录并增量写入
         for i, segment in enumerate(segments):
-            print(f"   🔍 分段 {i+1} 调试: block_type='{segment['block_type']}', subtype='{segment.get('block_subtype', '')}', content_length={len(segment['block_result'])}")
-            
             if segment['block_type'] and segment['block_type'] != 'unknown':  # 只添加有意义的记录，忽略unknown类型
-                print(f"   ✅ 分段 {i+1} 通过过滤: {segment['block_type']} - {segment['block_result'][:50]}{'...' if len(segment['block_result']) > 50 else ''}")
-                
                 record = {
                     'question_id': question_id,
                     'question_type': question_type,
                     'question_text': question_text,
+                    'context': context_str,  # 添加context列
                     'chatid': chat_id or '',  # 添加chatid列
                     'block_type': segment['block_type'],
                     'block_subtype': segment.get('block_subtype', ''),
@@ -223,15 +297,9 @@ def process_single_row(row_data, output_file):
 
                 # 增量写入文件
                 record_df = pd.DataFrame([record])
-                record_df.to_csv(output_file, mode='a', header=False, index=False, encoding='utf-8-sig')
+                record_df.to_csv(output_file, mode='a', header=False, index=False, encoding='utf-8-sig', 
+                                quoting=1, escapechar='\\')  # 使用适当的引用和转义
                 records_count += 1
-            else:
-                if not segment['block_type']:
-                    print(f"   ❌ 分段 {i+1} 被过滤: block_type为空")
-                elif segment['block_type'] == 'unknown':
-                    print(f"   ❌ 分段 {i+1} 被过滤: block_type=unknown")
-                else:
-                    print(f"   ❌ 分段 {i+1} 被过滤: 其他原因")
     else:
         print(f"   ❌ 跳过失败的行: {question_id} - 输出为空或调用失败")
         if result.get('error'):
@@ -307,12 +375,24 @@ def read_data_file(file_path):
         print(f"缺少必要的列: {missing_columns}")
         return None
 
+    # 检查是否有context列
+    has_context = 'context' in df.columns
+    if has_context:
+        print("✅ 检测到context列，将使用上下文模式")
+    else:
+        print("💬 未检测到context列，将使用简单模式")
+
     # 打印样例数据
     print("样例数据:")
     sample_row = df.iloc[0]
     for col in required_columns:
         sample_text = str(sample_row[col])
         print(f"  {col}: {sample_text[:50]}{'...' if len(sample_text) > 50 else ''}")
+    
+    # 如果有context列，也显示样例
+    if has_context and pd.notna(sample_row.get('context')):
+        context_text = str(sample_row['context'])
+        print(f"  context: {context_text[:100]}{'...' if len(context_text) > 100 else ''}")
 
     return df
 
@@ -324,14 +404,15 @@ def process_csv_data(data_file, output_file):
 
     # 创建结果表格头文件
     result_df = pd.DataFrame(columns=[
-        'question_id', 'question_type', 'question_text', 'chatid',
+        'question_id', 'question_type', 'question_text', 'context', 'chatid',
         'block_type', 'block_subtype', 'block_result',
         'block_start', 'block_end'
     ])
 
     # 检查输出文件是否存在，如果不存在创建并写入表头
     if not os.path.exists(output_file):
-        result_df.to_csv(output_file, index=False, encoding='utf-8-sig')
+        result_df.to_csv(output_file, index=False, encoding='utf-8-sig', 
+                        quoting=1, escapechar='\\')
 
     # 从环境变量读取线程数配置，默认为5
     max_workers = int(os.getenv('DATA_PROCESSOR_THREADS', 5))
@@ -378,9 +459,6 @@ def main():
     if len(sys.argv) > 1:
         input_csv = sys.argv[1]
         print(f"使用指定的输入文件: {input_csv}")
-    else:
-        input_csv = "data/test_set20250918.xls"
-        print(f"使用默认输入文件: {input_csv}")
 
     # 确保data目录存在
     os.makedirs('data', exist_ok=True)
@@ -388,12 +466,6 @@ def main():
 
     print("=" * 60)
     print("Coze Bot 数据集处理程序")
-    print("=" * 60)
-    print("用法: python data_processor.py [file_path]")
-    print("支持格式: .csv, .xls, .xlsx")
-    print("示例:")
-    print("  python data_processor.py data/test_set20250918.xls")
-    print("  python data_processor.py data/test_set20250918.csv")
     print("=" * 60)
 
     # 检查输入文件是否存在

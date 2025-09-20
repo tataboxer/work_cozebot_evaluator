@@ -13,19 +13,16 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// 文件上传配置
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
+// 文件上传配置 - 使用内存存储
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 限制文件大小为10MB
   }
 });
-const upload = multer({ storage: storage });
 
-// 确保上传目录存在
-fs.mkdir('uploads', { recursive: true }).catch(console.error);
+// 不再需要uploads目录
+// fs.mkdir('uploads', { recursive: true }).catch(console.error);
 
 // API 路由
 
@@ -124,22 +121,25 @@ app.post('/api/process-excel', upload.single('excelFile'), async (req, res) => {
       return res.status(400).json({ success: false, message: '没有上传文件' });
     }
 
-    console.log('收到Excel文件:', req.file.filename);
-    broadcastLog('info', `收到Excel文件: ${req.file.filename}`);
+    console.log('收到Excel文件:', req.file.originalname);
+    broadcastLog('info', `收到Excel文件: ${req.file.originalname}`);
 
-    const inputPath = req.file.path;
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '');
-    const outputCsv = `data/results_${timestamp}.csv`;
+    // 创建临时文件来传递给Python脚本
+    const tempPath = path.join(__dirname, 'temp_' + Date.now() + '_' + req.file.originalname);
+    
+    try {
+      // 将内存中的文件写入临时文件
+      await fs.writeFile(tempPath, req.file.buffer);
+      
+      console.log('开始处理Excel文件...');
+      broadcastLog('info', '开始处理Excel文件...');
 
-    console.log('开始处理Excel文件...');
-    broadcastLog('info', '开始处理Excel文件...');
-
-    // 调用Python脚本处理Excel
-    const pythonProcess = spawn('python', [
-      '-u',  // 禁用输出缓冲
-      'data_processor.py',
-      inputPath
-    ], {
+      // 调用Python脚本处理Excel
+      const pythonProcess = spawn('python', [
+        '-u',  // 禁用输出缓冲
+        'data_processor.py',
+        tempPath
+      ], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: {
         ...process.env,
@@ -159,7 +159,50 @@ app.post('/api/process-excel', upload.single('excelFile'), async (req, res) => {
       lines.forEach(line => {
         if (line.trim()) {
           console.log('Python输出:', line);
-          broadcastLog('python', line);
+          
+          // 过滤掉无用的调试信息，只显示重要日志
+          if (line.includes('开始处理Excel文件') ||
+              line.includes('使用指定的输入文件') ||
+              line.includes('支持格式') ||
+              line.includes('示例:') ||
+              line.includes('python data_processor.py') ||
+              line.includes('开始处理文件:') ||
+              line.includes('列名:') ||
+              line.includes('检测到context列') ||
+              line.includes('样例数据:') ||
+              line.includes('question_id:') ||
+              line.includes('question_type:') ||
+              line.includes('question_text:') ||
+              line.includes('准备调用Node.js') ||
+              line.includes('使用简单模式: 无上下文') ||
+              line.includes('最终命令:') ||
+              line.includes('成功解析上下文JSONL格式') ||
+              line.includes('🔄 传递上下文:') ||
+              line.includes('Coze原始输出') ||
+              line.includes('==========') ||
+              line.includes('Coze API Bot 测试') ||
+              line.includes('[dotenv') ||
+              line.includes('injecting env') ||
+              line.match(/^[\s=]+$/)) {
+            // 跳过这些无用的调试信息
+            return;
+          }
+          
+          // 检查是否是来自coze-bot-core.js的重要日志
+          if (line.includes('🔍 验证additional_messages内容') || 
+              line.includes('验证additional_messages内容') ||
+              line.includes('消息 ') || 
+              line.includes('[user]') || 
+              line.includes('[assistant]') ||
+              line.includes('使用上下文模式') ||
+              line.includes('使用简单模式') ||
+              line.includes('📋 使用命令行上下文') ||
+              line.includes('📋 使用环境变量上下文') ||
+              line.includes('🔍 上下文内容')) {
+            broadcastLog('coze', line); // 使用特殊的'coze'类型
+          } else {
+            broadcastLog('python', line);
+          }
         }
       });
     });
@@ -171,7 +214,15 @@ app.post('/api/process-excel', upload.single('excelFile'), async (req, res) => {
       broadcastLog('error', error);
     });
 
-    pythonProcess.on('close', (code) => {
+    pythonProcess.on('close', async (code) => {
+      // 清理临时文件
+      try {
+        await fs.unlink(tempPath);
+        console.log('临时文件已清理:', tempPath);
+      } catch (error) {
+        console.warn('清理临时文件失败:', error.message);
+      }
+      
       if (code === 0) {
         broadcastLog('success', 'Python脚本执行完成');
         // 扫描data目录找到最新的results_*.csv文件
@@ -185,11 +236,11 @@ app.post('/api/process-excel', upload.single('excelFile'), async (req, res) => {
               const latestFile = resultsFiles.sort().pop();
               const latestPath = path.join(dataDir, latestFile);
 
-              broadcastLog('success', `Excel处理成功，输出文件: ${latestPath}`);
+              broadcastLog('success', `Excel处理成功: ${latestPath}`);
               res.json({
                 success: true,
                 message: 'Excel处理成功',
-                inputFile: req.file.filename,
+                inputFile: req.file.originalname,
                 outputFile: latestPath,
                 output: stdout
               });
@@ -219,6 +270,16 @@ app.post('/api/process-excel', upload.single('excelFile'), async (req, res) => {
         });
       }
     });
+    
+    } catch (tempFileError) {
+      console.error('创建临时文件失败:', tempFileError);
+      broadcastLog('error', `创建临时文件失败: ${tempFileError.message}`);
+      res.status(500).json({
+        success: false,
+        message: '创建临时文件失败',
+        error: tempFileError.message
+      });
+    }
 
   } catch (error) {
     console.error('Excel处理异常:', error);
@@ -268,7 +329,50 @@ app.post('/api/run-assessment', async (req, res) => {
       lines.forEach(line => {
         if (line.trim()) {
           console.log('评估输出:', line);
-          broadcastLog('python', line);
+          
+          // 过滤掉无用的调试信息，只显示重要日志
+          if (line.includes('开始处理Excel文件') ||
+              line.includes('使用指定的输入文件') ||
+              line.includes('支持格式') ||
+              line.includes('示例:') ||
+              line.includes('python data_processor.py') ||
+              line.includes('开始处理文件:') ||
+              line.includes('列名:') ||
+              line.includes('检测到context列') ||
+              line.includes('样例数据:') ||
+              line.includes('question_id:') ||
+              line.includes('question_type:') ||
+              line.includes('question_text:') ||
+              line.includes('准备调用Node.js') ||
+              line.includes('使用简单模式: 无上下文') ||
+              line.includes('成功解析上下文JSONL格式') ||
+              line.includes('🔄 传递上下文:') ||
+              line.includes('Coze原始输出') ||
+              line.includes('==========') ||
+              line.includes('Coze API Bot 测试') ||
+              line.includes('[dotenv') ||
+              line.includes('injecting env') ||
+              line.match(/^[\s=]+$/)) {
+            // 跳过这些无用的调试信息
+            return;
+          }
+          
+          // 检查是否是来自coze-bot-core.js的重要日志
+          if (line.includes('🔍 验证additional_messages内容') || 
+              line.includes('验证additional_messages内容') ||
+              line.includes('最终命令:') ||
+              line.includes('消息 ') || 
+              line.includes('[user]') || 
+              line.includes('[assistant]') ||
+              line.includes('使用上下文模式') ||
+              line.includes('使用简单模式') ||
+              line.includes('📋 使用命令行上下文') ||
+              line.includes('📋 使用环境变量上下文') ||
+              line.includes('🔍 上下文内容')) {
+            broadcastLog('coze', line); // 使用特殊的'coze'类型
+          } else {
+            broadcastLog('python', line);
+          }
         }
       });
     });
@@ -381,10 +485,10 @@ app.get('/api/csv-data', async (req, res) => {
       csvContent = csvContent.slice(1);
     }
     
-    // 简单的CSV解析
-    const lines = csvContent.split(/\r?\n/).filter(line => line.trim());
+    // 使用高级CSV解析处理包含换行符的字段
+    const allRows = parseCSVContent(csvContent);
     
-    if (lines.length === 0) {
+    if (allRows.length === 0) {
       return res.json({
         success: true,
         data: [],
@@ -392,14 +496,14 @@ app.get('/api/csv-data', async (req, res) => {
       });
     }
 
-    // 解析表头 - 更好地处理CSV格式
-    const headers = parseCSVLine(lines[0]).map(header => header.trim().replace(/^"|"$/g, ''));
+    // 解析表头
+    const headers = allRows[0].map(header => header.trim().replace(/^"|"$/g, ''));
     
     // 解析数据行
     const data = [];
-    for (let i = 1; i < lines.length; i++) {
+    for (let i = 1; i < allRows.length; i++) {
       try {
-        const values = parseCSVLine(lines[i]);
+        const values = allRows[i];
         if (values.length > 0) {
           const row = {};
           headers.forEach((header, index) => {
@@ -434,7 +538,71 @@ app.get('/api/csv-data', async (req, res) => {
   }
 });
 
-// 简单的CSV行解析函数（处理包含逗号的字段）
+// 高级CSV解析函数（处理包含换行符和逗号的字段）
+function parseCSVContent(csvContent) {
+  const lines = csvContent.split(/\r?\n/);
+  const result = [];
+  let currentRow = [];
+  let currentField = '';
+  let inQuotes = false;
+  let rowIndex = 0;
+  
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+    const line = lines[lineIndex];
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          // 转义的引号
+          currentField += '"';
+          i++; // 跳过下一个引号
+        } else {
+          // 切换引号状态
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        // 字段分隔符
+        currentRow.push(currentField.trim());
+        currentField = '';
+      } else {
+        currentField += char;
+      }
+    }
+    
+    // 行结束处理
+    if (inQuotes) {
+      // 如果还在引号内，这行是多行字段的一部分，添加换行符继续
+      currentField += '\n';
+    } else {
+      // 行结束，添加最后一个字段
+      currentRow.push(currentField.trim());
+      currentField = '';
+      
+      // 如果这行有内容，添加到结果
+      if (currentRow.some(field => field !== '')) {
+        result.push(currentRow);
+      }
+      
+      currentRow = [];
+    }
+  }
+  
+  // 处理最后一行
+  if (currentRow.length > 0 || currentField) {
+    if (currentField) {
+      currentRow.push(currentField.trim());
+    }
+    if (currentRow.some(field => field !== '')) {
+      result.push(currentRow);
+    }
+  }
+  
+  return result;
+}
+
+// 简单的CSV行解析函数（保留向后兼容）
 function parseCSVLine(line) {
   const result = [];
   let current = '';
@@ -489,10 +657,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 服务器启动成功！`);
   console.log(`📍 本地访问: http://localhost:${PORT}`);
   console.log(`🌐 局域网访问: http://${localIP}:${PORT}`);
-  console.log(`📁 文件上传目录: uploads/`);
   console.log(`📊 数据目录: data/`);
-  console.log(`\n👥 同事可以通过以下地址访问:`);
-  console.log(`   http://${localIP}:${PORT}`);
 });
 
 // 优雅关闭
