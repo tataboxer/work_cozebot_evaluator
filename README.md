@@ -303,18 +303,7 @@ const evaluationCriteria = {
 };
 ```
 
-## 📞 技术支持
 
-### 常见问题排查
-1. **API调用失败**：检查网络连接和API密钥配置
-2. **Excel处理错误**：确认文件格式和列名正确性
-3. **评估超时**：调整并发线程数和网络超时设置
-4. **内存不足**：处理大文件时可能需要增加系统内存
-
-### 获取帮助
-- 📧 **邮件支持**：tech-support@museum.com
-- 💬 **在线文档**：[项目Wiki](https://github.com/your-repo/wiki)
-- 🐛 **问题报告**：[GitHub Issues](https://github.com/your-repo/issues)
 
 ## 📄 开源协议
 
