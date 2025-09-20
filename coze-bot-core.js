@@ -1,72 +1,84 @@
 const https = require('https');
 require('dotenv').config();
 
+// 环境变量验证
+function validateEnvironment() {
+  const required = ['COZE_API_TOKEN', 'COZE_BOT_ID'];
+  const missing = required.filter(key => !process.env[key]);
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
+}
 
+// 安全的JSON解析
+function safeJsonParse(jsonString, fallback = null) {
+  try {
+    return JSON.parse(jsonString);
+  } catch (error) {
+    console.warn(`JSON解析失败: ${error.message}`);
+    return fallback;
+  }
+}
 
 // 从.env文件读取配置，如果没有则使用默认值
-const DEFAULT_COZE_API_TOKEN = process.env.COZE_API_TOKEN ;
-const DEFAULT_BOT_ID = process.env.COZE_BOT_ID ;
-const DEFAULT_CONTENT = process.env.DEFAULT_CONTENT ;
-// 从.env文件读取token，如果没有则使用默认值
-const DEFAULT_ACCESS_TOKEN = process.env.ACCESS_TOKEN ;
+const DEFAULT_COZE_API_TOKEN = process.env.COZE_API_TOKEN;
+const DEFAULT_BOT_ID = process.env.COZE_BOT_ID;
+const DEFAULT_CONTENT = process.env.DEFAULT_CONTENT || '今天星期几';
+const DEFAULT_ACCESS_TOKEN = process.env.ACCESS_TOKEN;
+const PROJECT_ID = process.env.COZE_PROJECT_ID || 'fdb3e9f7-099b-3962-8ce5-0f67cd490d9f';
 
 /**
- * 测试流式响应
- * @param {string} content - 用户输入内容（可选）
- * @param {string} accessToken - 访问令牌（可选）
- * @param {string} apiToken - API令牌（可选）
- * @param {string} botId - Bot ID（可选）
- * @param {function} callback - 回调函数（可选，用于获取结果）
+ * 调用Coze Bot并返回流式响应结果
+ * @param {string} content - 用户输入内容（从命令行参数覆盖）
+ * @param {Array} contextJson - 对话上下文JSON数组（从命令行参数覆盖）
  */
-function testStreamingResponse(content = DEFAULT_CONTENT, accessToken = DEFAULT_ACCESS_TOKEN, apiToken = DEFAULT_COZE_API_TOKEN, botId = DEFAULT_BOT_ID, callback = null) {
-  // Only print separator when running as main module
-  if (require.main === module) {
-    console.log('\n\n='.repeat(6));
-  }
-
+function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
   // 从命令行参数获取参数
-  // 新的参数顺序: content, contextJson, accessToken, apiToken, botId
   if (process.argv.length > 2) {
     content = process.argv[2];
   }
   
-  // 新增：从命令行参数获取上下文JSON（第3个参数）
-  let contextFromArgs = null;
+  // 从命令行参数获取上下文JSON（第3个参数）
   if (process.argv.length > 3 && process.argv[3] && process.argv[3] !== '') {
-    try {
-      // 尝试解析JSON，如果失败则提供更详细的错误信息
-      const jsonString = process.argv[3];
-      console.log(`🔍 尝试解析JSON字符串长度: ${jsonString.length}`);
-      contextFromArgs = JSON.parse(jsonString);
-      console.log(`📋 从命令行参数获取上下文: ${contextFromArgs.length} 条消息`);
-    } catch (error) {
-      console.log(`⚠️ 命令行上下文解析失败: ${error.message}`);
-      console.log(`📝 建议: 确保JSON字符串正确转义，或考虑使用文件方式传递上下文`);
-      console.log(`💡 示例: node coze-bot-core.js "问题" '[]' 或使用环境变量COZE_CONTEXT`);
+    let jsonString = process.argv[3];
+    console.log(`🔍 尝试解析JSON字符串长度: ${jsonString.length}`);
+    console.log(`🔍 原始JSON字符串: ${jsonString}`);
+    
+    // 尝试修复PowerShell导致的JSON格式问题
+    if (jsonString.includes('{') && !jsonString.includes('"role"')) {
+      console.log('🔧 检测到PowerShell格式问题，尝试修复...');
+      // 修复缺失的引号
+      jsonString = jsonString
+        .replace(/([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":')
+        .replace(/:([^,}\]]+)([,}\]])/g, ':"$1"$2')
+        .replace(/:""/g, ':""')
+        .replace(/:"{/g, ':{')
+        .replace(/}"([,\]])/g, '}$1');
+      console.log(`🔧 修复后的JSON: ${jsonString}`);
+    }
+    
+    contextJson = safeJsonParse(jsonString);
+    if (contextJson) {
+      console.log(`📋 从命令行参数获取上下文: ${contextJson.length} 条消息`);
     }
   }
   
-  if (process.argv.length > 4) {
-    accessToken = process.argv[4];
-  }
-  if (process.argv.length > 5) {
-    apiToken = process.argv[5];
-  }
-  if (process.argv.length > 6) {
-    botId = process.argv[6];
-  }
+  // 使用环境变量中的配置
+  const accessToken = DEFAULT_ACCESS_TOKEN;
+  const apiToken = DEFAULT_COZE_API_TOKEN;
+  const botId = DEFAULT_BOT_ID;
 
   // 记录请求开始时间
   const startTime = Date.now();
-  console.log(`开始测试流式响应... (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
+  console.log(`开始调用Coze Bot... (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
   
   // 准备对话消息 - 优先使用命令行参数，然后是COZE_CONTEXT，最后是简单模式
   let additionalMessages = [];
   let contextMessages = null;
   
-  // 1. 优先使用命令行参数的上下文
-  if (contextFromArgs && contextFromArgs.length > 0) {
-    contextMessages = contextFromArgs;
+  // 1. 优先使用解析的上下文参数
+  if (contextJson && contextJson.length > 0) {
+    contextMessages = contextJson;
     console.log(`📋 使用命令行上下文: ${contextMessages.length} 条历史消息`);
   }
   // 2. 其次使用环境变量的上下文
@@ -74,7 +86,7 @@ function testStreamingResponse(content = DEFAULT_CONTENT, accessToken = DEFAULT_
     try {
       const contextConfig = process.env.COZE_CONTEXT;
       if (contextConfig && contextConfig.trim() && contextConfig !== '[]') {
-        contextMessages = JSON.parse(contextConfig);
+        contextMessages = safeJsonParse(contextConfig);
         console.log(`📋 使用环境变量上下文: ${contextMessages.length} 条历史消息`);
       }
     } catch (error) {
@@ -125,7 +137,7 @@ function testStreamingResponse(content = DEFAULT_CONTENT, accessToken = DEFAULT_
     "parameters": {
       "client_type": "TS",
       "access_token": accessToken,
-      "project_id": "fdb3e9f7-099b-3962-8ce5-0f67cd490d9f",
+      "project_id": PROJECT_ID,
       "conversation_id": "",
       "user_name": "Leo"
     }
@@ -143,12 +155,21 @@ function testStreamingResponse(content = DEFAULT_CONTENT, accessToken = DEFAULT_
     }
   };
 
+  // 验证环境变量
+  validateEnvironment();
+  
   console.log('发送流式请求数据:', JSON.stringify(requestData, null, 2));
 
   console.log(`请求开始时间: ${(Date.now() - startTime) / 1000.0}s`);
 
   // 创建HTTPS请求
   const req = https.request(options, (res) => {
+    // 检查HTTP状态码
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      console.error(`HTTP错误: ${res.statusCode}`);
+      console.error(`请求失败，状态码: ${res.statusCode}`);
+      return;
+    }
     console.log(`流式响应状态码: ${res.statusCode} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
     console.log(`流式响应头: ${JSON.stringify(res.headers)} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
 
@@ -186,7 +207,8 @@ function testStreamingResponse(content = DEFAULT_CONTENT, accessToken = DEFAULT_
           }
           
           try {
-            const eventData = JSON.parse(dataContent);
+            const eventData = safeJsonParse(dataContent);
+            if (!eventData) return;
             console.log(`📦 事件数据: ${JSON.stringify(eventData, null, 2)} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
             
             // 获取chat_id（通常在第一个事件数据中）
@@ -233,7 +255,7 @@ function testStreamingResponse(content = DEFAULT_CONTENT, accessToken = DEFAULT_
                       messageSubTypes.set(eventData.id, contentObj.display_type);
                     } else {
                       // 没有display_type时，设为"文本回复"
-                      messageSubTypes.set(eventData.id, '文本回复');
+                      messageSubTypes.set(eventData.id, '其他');
                     }
                   } catch (e) {
                     // 如果不是JSON格式，说明是纯文本回复
@@ -251,7 +273,7 @@ function testStreamingResponse(content = DEFAULT_CONTENT, accessToken = DEFAULT_
     });
 
     res.on('end', () => {
-      console.log(`\n✅ 流式响应测试完成！ (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
+      console.log(`\n✅ Coze Bot调用完成！ (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
 
       // 验证additional_messages的内容
       console.log('\n🔍 验证additional_messages内容:');
@@ -305,10 +327,7 @@ function testStreamingResponse(content = DEFAULT_CONTENT, accessToken = DEFAULT_
 
       console.log(`\n总计分段数: ${segmentCount} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
 
-      // 返回结果（用于外部调用）
-      if (callback) {
-        callback(results);
-      }
+      // 返回结果
       return results;
     });
   });
@@ -325,11 +344,7 @@ function testStreamingResponse(content = DEFAULT_CONTENT, accessToken = DEFAULT_
 
 // 导出函数供外部调用
 module.exports = {
-  testStreamingResponse,
-  DEFAULT_CONTENT,
-  DEFAULT_ACCESS_TOKEN,
-  DEFAULT_COZE_API_TOKEN,
-  DEFAULT_BOT_ID
+  callCozeBot
 };
 
 // 如果直接运行此文件，则执行默认测试
@@ -338,6 +353,6 @@ if (require.main === module) {
   console.log('🤖 Coze API Bot 测试');
   console.log('='.repeat(60));
 
-  // 直接调用流式响应函数
-  testStreamingResponse();
+  // 直接调用Coze Bot
+  callCozeBot();
 }

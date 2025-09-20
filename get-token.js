@@ -30,10 +30,9 @@ const options = {
 };
 
 console.log('='.repeat(60));
-console.log('🧪 登录接口测试');
+console.log('🧪 登录接口');
 console.log('='.repeat(60));
-console.log('请求URL:', LOGIN_URL);
-console.log('请求体数据:', JSON.stringify(requestData, null, 2));
+
 
 // 创建HTTP请求
 const req = http.request(options, (res) => {
@@ -59,7 +58,6 @@ const req = http.request(options, (res) => {
         console.log('\n✅ 登录测试成功！');
         // 提取并显示令牌信息
         if (jsonResponse.items && jsonResponse.items.token) {
-          console.log('🔑 访问令牌:', jsonResponse.items.token);
 
           // 更新.env文件中的token（保持其他配置不变）
           const envPath = path.join(__dirname, '.env');
