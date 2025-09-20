@@ -15,18 +15,12 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #f8f9fa;
             min-height: 100vh;
-            padding: 0;
-            margin: 0;
         }
 
         .container {
             width: 100%;
-            max-width: none;
             margin: 0;
             background: white;
-            border-radius: 0;
-            box-shadow: none;
-            overflow: hidden;
             min-height: 100vh;
         }
 
@@ -50,7 +44,6 @@
 
         .main-content {
             padding: 60px;
-            max-width: none;
         }
 
         .workflow {
@@ -67,7 +60,6 @@
             text-align: center;
             border: 2px solid transparent;
             transition: all 0.3s ease;
-            position: relative;
         }
 
         .step-card:hover {
@@ -94,11 +86,22 @@
             margin-bottom: 15px;
             font-size: 1.3rem;
         }
-
+        
         .step-card p {
             color: #666;
             margin-bottom: 20px;
             line-height: 1.6;
+        }
+        
+        .step-card p a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .step-card p a:hover {
+            color: #764ba2;
+            text-decoration: underline;
         }
 
         .btn {
@@ -173,18 +176,6 @@
             border: 1px solid #b3d7ff;
         }
 
-        .file-list {
-            margin-top: 20px;
-        }
-
-        .file-list select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            font-size: 1rem;
-        }
-
         .loading {
             display: inline-block;
             width: 20px;
@@ -205,6 +196,13 @@
             margin-top: 20px;
         }
 
+        .progress-text {
+            margin-bottom: 10px;
+            text-align: center;
+            color: #666;
+            display: none;
+        }
+
         .progress-bar {
             width: 100%;
             height: 20px;
@@ -219,14 +217,6 @@
             background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
             width: 0%;
             transition: width 0.3s ease;
-        }
-
-        .footer {
-            background: #f8f9fa;
-            padding: 20px;
-            text-align: center;
-            color: #666;
-            border-top: 1px solid #eee;
         }
 
         /* 日志面板样式 */
@@ -253,6 +243,8 @@
             justify-content: space-between;
             align-items: center;
             border-radius: 10px 10px 0 0;
+            cursor: move;
+            user-select: none;
         }
 
         .log-header h3 {
@@ -307,36 +299,9 @@
             border-left: 3px solid #17a2b8;
         }
 
-        .log-entry.python {
-            color: #6f42c1;
-            background: rgba(111, 66, 193, 0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-            border-left: 3px solid #6f42c1;
-            font-family: 'Courier New', monospace;
-        }
-
-        .log-entry.connected {
-            color: #20c997;
-            background: rgba(32, 201, 151, 0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-            border-left: 3px solid #20c997;
-        }
-
-        .log-entry.coze {
-            color: #fd7e14;
-            background: rgba(253, 126, 20, 0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-            border-left: 3px solid #fd7e14;
-            font-family: 'Courier New', monospace;
-            font-weight: 500;
-        }
-
         .log-toggle {
             position: fixed;
-            top: 20px;
+            top: 80px;
             right: 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -349,13 +314,10 @@
             font-size: 1.2rem;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             transition: all 0.3s ease;
-            
-            /* 添加居中对齐 */
             display: flex;
             align-items: center;
             justify-content: center;
         }
-
 
         .log-toggle:hover {
             transform: scale(1.1);
@@ -380,13 +342,7 @@
             gap: 15px;
         }
 
-        .csv-title {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .csv-header h3 {
+        .csv-title h3 {
             color: #333;
             margin: 0;
             font-size: 1.5rem;
@@ -414,17 +370,18 @@
             gap: 10px;
             flex-wrap: wrap;
         }
-
-        .csv-controls label {
-            color: #666;
-            font-weight: 500;
-        }
-
+        
         .csv-controls select {
             padding: 8px 12px;
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 0.9rem;
+            background: white;
+        }
+        
+        .csv-controls label {
+            color: #666;
+            font-weight: 500;
         }
 
         .btn-small {
@@ -455,7 +412,6 @@
             min-height: 500px;
             overflow-y: auto;
             overflow-x: auto;
-            position: relative;
         }
 
         #csvTable {
@@ -463,8 +419,6 @@
             border-collapse: collapse;
             font-size: 0.9rem;
             table-layout: fixed;
-            /* 确保表格在容器中正确滚动 */
-            margin: 0;
         }
 
         #csvTable th {
@@ -482,7 +436,6 @@
             text-overflow: ellipsis;
             white-space: nowrap;
             cursor: pointer;
-            /* 确保表头冻结效果 */
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
@@ -518,48 +471,12 @@
             white-space: nowrap;
         }
 
-        /* 列调整器样式 */
-        .column-resizer {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 5px;
-            height: 100%;
-            cursor: col-resize;
-            background: transparent;
-            z-index: 101;
-        }
-
-        .column-resizer:hover {
-            background: #007bff;
-        }
-
-        .column-resizer.resizing {
-            background: #007bff;
-        }
-
-        /* 单元格悬停显示完整内容 */
-        #csvTable td:hover,
-        #csvTable th:hover {
-            overflow: visible;
-            white-space: normal;
-            word-wrap: break-word;
-            z-index: 12;
-            background: #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            max-width: 300px;
-        }
-
         #csvTable tr:hover {
             background: #f8f9fa;
         }
 
         #csvTable tr:nth-child(even) {
             background: #fafafa;
-        }
-
-        #csvTable tr:nth-child(even):hover {
-            background: #f0f0f0;
         }
 
         .csv-stats {
@@ -570,7 +487,6 @@
             font-size: 0.9rem;
         }
 
-        /* 评估分数样式 */
         .score-cell {
             text-align: center;
             font-weight: bold;
@@ -578,36 +494,24 @@
 
         .score-5 { color: #28a745; }
         .score-4 { color: #6f9c2f; }
-        .score-3 { color: #ffc107; color: #856404; }
+        .score-3 { color: #856404; }
         .score-2 { color: #fd7e14; }
         .score-1 { color: #dc3545; }
 
-        /* 文本截断样式 */
-        .text-truncate {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            cursor: pointer;
-            position: relative;
-            width: 100%;
-        }
-
-        .text-truncate:hover {
-            background: #e9ecef;
-        }
-
-        .text-truncate.expanded {
-            white-space: normal;
-            max-width: none;
-        }
-
-        /* 自适应文本显示 */
         .text-adaptive {
             width: 100%;
             word-wrap: break-word;
             white-space: normal;
             max-height: 150px;
             overflow-y: auto;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #eee;
         }
 
         @media (max-width: 768px) {
@@ -636,43 +540,6 @@
                 left: 5vw;
                 top: 15vh;
             }
-
-            .csv-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .csv-controls {
-                justify-content: center;
-            }
-
-            #csvTable {
-                font-size: 0.8rem;
-            }
-
-            #csvTable th,
-            #csvTable td {
-                padding: 8px 4px;
-            }
-
-            .text-truncate {
-                max-width: 120px;
-            }
-
-            #csvTableContainer {
-                max-height: 60vh;
-                min-height: 400px;
-            }
-        }
-
-        @media (min-width: 1400px) {
-            .main-content {
-                padding: 80px 100px;
-            }
-
-            .header {
-                padding: 50px 100px;
-            }
         }
     </style>
 </head>
@@ -698,7 +565,7 @@
                 <div class="step-card">
                     <div class="step-number">2</div>
                     <h3>📤 上传测试问题集</h3>
-                    <p>上传Excel格式的测试问题集，系统将自动调用Coze Agent生成回复</p>
+                    <p>上传测试集（<a href="test_set_example.xls" download>下载样例</a>），自动调用Coze Agent生成回复</p>
                     <div class="file-input">
                         <input type="file" id="excelFile" accept=".xls,.xlsx">
                         <label for="excelFile">选择Excel文件</label>
@@ -706,6 +573,12 @@
                     </div>
                     <button id="processExcelBtn" class="btn" disabled>处理Excel</button>
                     <div id="excelStatus" class="status"></div>
+                    <div class="progress-container">
+                        <div id="excelProgressText" class="progress-text"></div>
+                        <div class="progress-bar" id="excelProgressBar">
+                            <div class="progress-fill" id="excelProgressFill"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 步骤3: 执行评估 -->
@@ -713,18 +586,12 @@
                     <div class="step-number">3</div>
                     <h3>📊 执行质量评估</h3>
                     <p>使用LLM对助手回复进行专业评估，生成详细的质量报告</p>
-                    <div class="file-input">
-                        <input type="file" id="assessmentFileInput" accept=".csv">
-                        <label for="assessmentFileInput">选择CSV文件</label>
-                        <div id="assessmentFileName" style="margin-top: 10px; color: #666;"></div>
-                        <div style="margin-top: 5px; font-size: 12px; color: #999;">
-                            💡 建议选择 data/output/ 目录中的文件
-                        </div>
-                    </div>
+                    <div id="assessmentFileName" style="margin: 10px 0 25px 0; color: #666;">请先完成第2步Excel处理</div>
                     <button id="runAssessmentBtn" class="btn" disabled>开始评估</button>
                     <div id="assessmentStatus" class="status"></div>
                     <div class="progress-container">
-                        <div class="progress-bar">
+                        <div id="progressText" class="progress-text"></div>
+                        <div class="progress-bar" id="progressBar">
                             <div class="progress-fill" id="progressFill"></div>
                         </div>
                     </div>
@@ -745,6 +612,7 @@
                             <option value="文本回复" selected>只显示文本回复</option>
                         </select>
                         <button id="refreshCsvBtn" class="btn-small">刷新数据</button>
+                        <button id="downloadCsvBtn" class="btn-small" disabled>⬇️ 下载CSV</button>
                     </div>
                 </div>
                 <div class="csv-content">
@@ -774,832 +642,6 @@
         <div class="log-content" id="logContent"></div>
     </div>
 
-    <script>
-        // DOM 元素
-        const refreshTokenBtn = document.getElementById('refreshTokenBtn');
-        const processExcelBtn = document.getElementById('processExcelBtn');
-        const runAssessmentBtn = document.getElementById('runAssessmentBtn');
-        const excelFileInput = document.getElementById('excelFile');
-        const assessmentFileInput = document.getElementById('assessmentFileInput');
-        const assessmentFileName = document.getElementById('assessmentFileName');
-        const fileName = document.getElementById('fileName');
-        const tokenStatus = document.getElementById('tokenStatus');
-        const excelStatus = document.getElementById('excelStatus');
-        const assessmentStatus = document.getElementById('assessmentStatus');
-        const progressFill = document.getElementById('progressFill');
-        const progressBar = document.querySelector('.progress-bar');
-
-        // CSV显示相关元素
-        const csvDisplaySection = document.getElementById('csvDisplaySection');
-        const csvFileName = document.getElementById('csvFileName');
-        const subtypeFilter = document.getElementById('subtypeFilter');
-        const refreshCsvBtn = document.getElementById('refreshCsvBtn');
-        const csvTable = document.getElementById('csvTable');
-        const csvTableHead = document.getElementById('csvTableHead');
-        const csvTableBody = document.getElementById('csvTableBody');
-        const csvStats = document.getElementById('csvStats');
-
-        // 日志相关元素
-        const logToggle = document.getElementById('logToggle');
-        const logPanel = document.getElementById('logPanel');
-        const logContent = document.getElementById('logContent');
-        const closeLog = document.getElementById('closeLog');
-
-        let logPanelOpen = false;
-        let eventSource = null;
-        let currentCsvData = null;
-        let currentCsvFile = null;
-
-        // 日志功能
-        logToggle.addEventListener('click', () => {
-            logPanelOpen = !logPanelOpen;
-            logPanel.style.display = logPanelOpen ? 'flex' : 'none';
-            
-            // 当日志面板打开时，连接SSE
-            if (logPanelOpen && !eventSource) {
-                connectSSE();
-            }
-        });
-
-        closeLog.addEventListener('click', () => {
-            logPanelOpen = false;
-            logPanel.style.display = 'none';
-        });
-
-        // 连接Server-Sent Events
-        function connectSSE() {
-            eventSource = new EventSource('/api/logs');
-            
-            eventSource.onmessage = function(event) {
-                try {
-                    const data = JSON.parse(event.data);
-                    addLog(data.type, data.message);
-                } catch (error) {
-                    console.error('解析SSE消息失败:', error);
-                }
-            };
-            
-            eventSource.onerror = function(event) {
-                console.error('SSE连接错误:', event);
-                // 尝试重连
-                setTimeout(() => {
-                    if (logPanelOpen) {
-                        connectSSE();
-                    }
-                }, 3000);
-            };
-        }
-
-        // 添加日志函数
-        function addLog(type, message) {
-            const timestamp = new Date().toLocaleTimeString();
-            const logEntry = document.createElement('div');
-            logEntry.className = `log-entry ${type}`;
-            
-            // 根据不同类型设置不同样式
-            let icon = '';
-            switch(type) {
-                case 'success':
-                    icon = '✅';
-                    break;
-                case 'error':
-                    icon = '❌';
-                    break;
-                case 'python':
-                    icon = '🐍';
-                    break;
-                case 'coze':
-                    icon = '🤖';
-                    break;
-                case 'info':
-                    icon = 'ℹ️';
-                    break;
-                case 'connected':
-                    icon = '🔗';
-                    break;
-                default:
-                    icon = '📝';
-            }
-            
-            logEntry.innerHTML = `<strong>[${timestamp}] ${icon}</strong> ${message}`;
-            logContent.appendChild(logEntry);
-            logContent.scrollTop = logContent.scrollHeight;
-            
-            // 限制日志条数，防止内存溢出
-            if (logContent.children.length > 1000) {
-                logContent.removeChild(logContent.firstChild);
-            }
-        }
-
-        // 文件选择处理
-        excelFileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                fileName.textContent = `已选择: ${file.name}`;
-                processExcelBtn.disabled = false;
-                processExcelBtn.textContent = '处理Excel';
-                addLog('info', `文件选择: ${file.name}`);
-            } else {
-                fileName.textContent = '';
-                processExcelBtn.disabled = true;
-                addLog('info', '文件选择已取消');
-            }
-        });
-
-        // 评估文件选择
-        assessmentFileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                // 构建文件路径用于预览
-                let csvFilePath;
-                if (file.name.startsWith('results_')) {
-                    csvFilePath = `data/output/${file.name}`;
-                } else {
-                    // 对于非标准文件，先上传再预览
-                    csvFilePath = `data/${file.name}`;
-                }
-                
-                // 清除自动选择的文件状态，使用用户手动选择的文件
-                currentCsvFile = csvFilePath;
-                assessmentFileName.textContent = `已选择: ${file.name}`;
-                runAssessmentBtn.disabled = false;
-                runAssessmentBtn.textContent = '开始评估';
-                addLog('info', `手动选择评估文件: ${file.name}`);
-                
-                // 自动预览手动选择的CSV文件
-                previewCsvFile(csvFilePath, file.name, `正在预览选择的CSV文件: ${file.name}`);
-            } else {
-                assessmentFileName.textContent = '';
-                runAssessmentBtn.disabled = true;
-                addLog('info', '评估文件选择已取消');
-                currentCsvFile = null;
-            }
-        });
-
-        // 1. 刷新Token
-        refreshTokenBtn.addEventListener('click', async () => {
-            addLog('info', '开始刷新Token...');
-            showStatus(tokenStatus, 'info', '正在刷新Token...');
-            refreshTokenBtn.disabled = true;
-            refreshTokenBtn.innerHTML = '<div class="loading"></div>刷新中...';
-
-            try {
-                const response = await fetch('/api/refresh-token', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    showStatus(tokenStatus, 'success', '✅ Token刷新成功！');
-                    addLog('success', 'Token刷新成功');
-                } else {
-                    showStatus(tokenStatus, 'error', `❌ Token刷新失败: ${result.message}`);
-                    addLog('error', `Token刷新失败: ${result.message}`);
-                }
-            } catch (error) {
-                showStatus(tokenStatus, 'error', `❌ 网络错误: ${error.message}`);
-                addLog('error', `网络错误: ${error.message}`);
-            } finally {
-                refreshTokenBtn.disabled = false;
-                refreshTokenBtn.textContent = '刷新Token';
-            }
-        });
-
-        // 2. 处理Excel
-        processExcelBtn.addEventListener('click', async () => {
-            const file = excelFileInput.files[0];
-            if (!file) {
-                showStatus(excelStatus, 'error', '❌ 请先选择Excel文件');
-                addLog('error', '请先选择Excel文件');
-                return;
-            }
-
-            addLog('info', '开始处理Excel...');
-            showStatus(excelStatus, 'info', '正在处理Excel文件...');
-            processExcelBtn.disabled = true;
-            processExcelBtn.innerHTML = '<div class="loading"></div>处理中...';
-
-            const formData = new FormData();
-            formData.append('excelFile', file);
-
-            try {
-                const response = await fetch('/api/process-excel', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    showStatus(excelStatus, 'success', `✅ Excel处理成功！输出文件: ${result.outputFile}`);
-                    addLog('success', `Excel处理成功: ${result.outputFile}`);
-                    
-                    // 自动设置生成的CSV文件到评估文件选择器
-                    const outputFileName = result.outputFile.split('/').pop() || result.outputFile.split('\\').pop();
-                    assessmentFileName.textContent = `已选择: ${outputFileName}`;
-                    runAssessmentBtn.disabled = false;
-                    runAssessmentBtn.textContent = '开始评估';
-                    addLog('info', `已自动选择生成的CSV文件: ${outputFileName}`);
-                    
-                    // 自动加载和预览CSV数据
-                    currentCsvFile = result.outputFile;
-                    previewCsvFile(result.outputFile, outputFileName, '正在预览生成的CSV数据...');
-                } else {
-                    showStatus(excelStatus, 'error', `❌ Excel处理失败: ${result.message}`);
-                    addLog('error', `Excel处理失败: ${result.message}`);
-                }
-            } catch (error) {
-                showStatus(excelStatus, 'error', `❌ 网络错误: ${error.message}`);
-                addLog('error', `网络错误: ${error.message}`);
-            } finally {
-                processExcelBtn.disabled = false;
-                processExcelBtn.textContent = '处理Excel';
-            }
-        });
-
-        // 3. 执行评估
-        runAssessmentBtn.addEventListener('click', async () => {
-            let csvFile;
-            
-            // 检查是否有自动选择的文件（Excel处理后）
-            if (currentCsvFile && assessmentFileName.textContent.includes('已选择:')) {
-                csvFile = currentCsvFile;
-                addLog('info', `使用自动选择的文件: ${csvFile}`);
-            } else {
-                // 使用用户手动选择的文件
-                const file = assessmentFileInput.files[0];
-                if (!file) {
-                    addLog('error', '请先选择要评估的CSV文件');
-                    return;
-                }
-
-                // 假设用户选择的是data/output目录中的文件
-                // 构建正确的文件路径
-                if (file.name.startsWith('results_')) {
-                    csvFile = `data/output/${file.name}`;
-                    addLog('info', `使用data/output目录中的文件: ${file.name}`);
-                } else {
-                    // 如果不是标准格式，上传到临时目录处理
-                    const formData = new FormData();
-                    formData.append('csvFile', file);
-                    
-                    try {
-                        const uploadResponse = await fetch('/api/upload-csv', {
-                            method: 'POST',
-                            body: formData
-                        });
-                        
-                        const uploadResult = await uploadResponse.json();
-                        if (!uploadResult.success) {
-                            addLog('error', '文件上传失败: ' + uploadResult.message);
-                            return;
-                        }
-                        
-                        csvFile = uploadResult.filePath;
-                        addLog('info', `使用上传的文件: ${file.name}`);
-                    } catch (uploadError) {
-                        addLog('error', '文件上传失败: ' + uploadError.message);
-                        return;
-                    }
-                }
-            }
-
-            addLog('info', '开始执行评估...');
-            showStatus(assessmentStatus, 'info', '正在执行评估...');
-            runAssessmentBtn.disabled = true;
-            runAssessmentBtn.innerHTML = '<div class="loading"></div>评估中...';
-            progressBar.style.display = 'block';
-            progressFill.style.width = '0%';
-
-            try {
-                // 执行评估API调用
-                const response = await fetch('/api/run-assessment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ csvFile })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    addLog('success', '评估完成！');
-                    showStatus(assessmentStatus, 'success', '✅ 评估完成');
-                    progressFill.style.width = '100%';
-                    
-                    // 评估完成后刷新CSV预览（显示包含评估结果的数据）
-                    const fileName = csvFile.split('/').pop() || csvFile.split('\\').pop();
-                    previewCsvFile(csvFile, fileName, '正在刷新评估结果预览...');
-                } else {
-                    addLog('error', '评估失败: ' + result.message);
-                    showStatus(assessmentStatus, 'error', '❌ 评估失败');
-                }
-
-            } catch (error) {
-                addLog('error', '评估请求失败: ' + error.message);
-                showStatus(assessmentStatus, 'error', '❌ 评估请求失败');
-            } finally {
-                runAssessmentBtn.disabled = false;
-                runAssessmentBtn.textContent = '开始评估';
-                setTimeout(() => {
-                    progressBar.style.display = 'none';
-                }, 2000);
-            }
-        });
-
-
-        // 这个函数已经不再需要，因为现在使用文件选择器
-
-        // 显示状态信息
-        function showStatus(element, type, message) {
-            element.className = `status ${type}`;
-            element.textContent = message;
-            element.style.display = 'block';
-
-            // 自动隐藏成功消息
-            if (type === 'success') {
-                setTimeout(() => {
-                    element.style.display = 'none';
-                }, 5000);
-            }
-        }
-
-        // 页面加载时初始化
-        document.addEventListener('DOMContentLoaded', () => {
-            // 自动连接SSE以接收实时日志
-            connectSSE();
-        });
-
-        // 页面卸载时清理SSE连接
-        window.addEventListener('beforeunload', () => {
-            if (eventSource) {
-                eventSource.close();
-                eventSource = null;
-            }
-        });
-
-        // 不再需要定期刷新文件列表，因为现在使用文件选择器
-
-        // 统一的CSV预览函数
-        function previewCsvFile(filePath, fileName, logMessage) {
-            if (!filePath) return;
-            
-            setTimeout(() => {
-                loadCsvData(filePath);
-                addLog('info', logMessage || `正在预览CSV文件: ${fileName}`);
-            }, 500);
-        }
-
-        // CSV数据相关函数
-        async function loadCsvData(csvFile) {
-            try {
-                addLog('info', `正在加载CSV数据: ${csvFile}`);
-                const url = `/api/csv-data?file=${encodeURIComponent(csvFile)}`;
-                console.log('请求URL:', url);
-                
-                const response = await fetch(url);
-                console.log('响应状态:', response.status, response.statusText);
-                
-                // 检查响应是否成功
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                // 检查响应内容类型
-                const contentType = response.headers.get('content-type');
-                console.log('响应类型:', contentType);
-                
-                if (!contentType || !contentType.includes('application/json')) {
-                    const textResponse = await response.text();
-                    console.error('非JSON响应:', textResponse.substring(0, 200));
-                    throw new Error('服务器返回了非JSON响应');
-                }
-                
-                const result = await response.json();
-                console.log('解析结果:', result);
-                
-                if (result.success) {
-                    currentCsvData = result.data;
-                    displayCsvData(currentCsvData);
-                    csvDisplaySection.style.display = 'block';
-                    
-                    // 更新文件名显示
-                    const fileName = csvFile.split('/').pop() || csvFile; // 提取文件名
-                    csvFileName.textContent = `📁 ${fileName}`;
-                    csvFileName.className = 'csv-filename loaded';
-                    
-                    addLog('success', `CSV数据加载成功，共 ${result.data.length} 行`);
-                } else {
-                    addLog('error', `CSV数据加载失败: ${result.message}`);
-                    console.error('服务器错误:', result.error);
-                    
-                    // 显示错误状态
-                    csvFileName.textContent = '❌ 加载失败';
-                    csvFileName.className = 'csv-filename';
-                }
-            } catch (error) {
-                console.error('加载CSV数据完整错误:', error);
-                addLog('error', `加载CSV数据时出错: ${error.message}`);
-                
-                // 显示错误状态
-                csvFileName.textContent = '❌ 加载出错';
-                csvFileName.className = 'csv-filename';
-                
-                // 显示更详细的错误信息
-                if (error.message.includes('Unexpected token')) {
-                    addLog('error', '服务器可能返回了HTML而不是JSON，请检查服务器状态');
-                }
-            }
-        }
-
-        function displayCsvData(data) {
-            if (!data || data.length === 0) {
-                csvTableBody.innerHTML = '<tr><td colspan="100%">暂无数据</td></tr>';
-                csvStats.innerHTML = '暂无数据';
-                return;
-            }
-
-            // 应用过滤器
-            const filterValue = subtypeFilter.value;
-            let filteredData = data;
-            
-            if (filterValue !== 'all') {
-                filteredData = data.filter(row => row.block_subtype === filterValue);
-            }
-
-            // 创建表头
-            if (data.length > 0) {
-                const columns = Object.keys(data[0]);
-                csvTableHead.innerHTML = `
-                    <tr>
-                        ${columns.map((col, index) => {
-                            const isSortable = isSortableColumn(col);
-                            return `
-                                <th style="width: ${getColumnWidth(col)}px;" 
-                                    class="${isSortable ? 'sortable' : ''}"
-                                    data-column="${col}"
-                                    data-sort="none">
-                                    ${col}
-                                    <div class="column-resizer" data-column="${index}"></div>
-                                </th>
-                            `;
-                        }).join('')}
-                    </tr>
-                `;
-                
-                // 添加列调整事件监听器
-                initColumnResizers();
-                
-                // 添加排序事件监听器
-                initColumnSorting();
-            }
-
-            // 创建表格内容
-            renderTableBody(filteredData);
-
-            // 更新统计信息
-            updateCsvStats(data, filteredData);
-        }
-
-        function updateCsvStats(allData, filteredData) {
-            const totalRows = allData.length;
-            const filteredRows = filteredData.length;
-            const answerRows = filteredData.filter(row => row.block_type === 'answer').length;
-            const textReplyRows = filteredData.filter(row => row.block_subtype === '文本回复').length;
-            
-            // 计算评估完成情况
-            const evaluatedRows = filteredData.filter(row => 
-                row['最终准确率_分数'] && row['专业度_分数'] && row['语气合理_分数']
-            ).length;
-            
-            // 计算平均分数
-            const scores = {
-                accuracy: [],
-                professionalism: [],
-                tone: []
-            };
-            
-            filteredData.forEach(row => {
-                if (row['最终准确率_分数']) scores.accuracy.push(parseFloat(row['最终准确率_分数']));
-                if (row['专业度_分数']) scores.professionalism.push(parseFloat(row['专业度_分数']));
-                if (row['语气合理_分数']) scores.tone.push(parseFloat(row['语气合理_分数']));
-            });
-            
-            const avgAccuracy = scores.accuracy.length ? (scores.accuracy.reduce((a, b) => a + b, 0) / scores.accuracy.length).toFixed(2) : 'N/A';
-            const avgProfessionalism = scores.professionalism.length ? (scores.professionalism.reduce((a, b) => a + b, 0) / scores.professionalism.length).toFixed(2) : 'N/A';
-            const avgTone = scores.tone.length ? (scores.tone.reduce((a, b) => a + b, 0) / scores.tone.length).toFixed(2) : 'N/A';
-            
-            // 计算首token时长统计
-            const tokenTimes = [];
-            filteredData.forEach(row => {
-                const blockStart = parseFloat(row.block_start);
-                if (!isNaN(blockStart) && blockStart > 0) {
-                    tokenTimes.push(blockStart);
-                }
-            });
-            
-            let tokenStats = 'N/A';
-            if (tokenTimes.length > 0) {
-                const avgTokenTime = (tokenTimes.reduce((a, b) => a + b, 0) / tokenTimes.length).toFixed(2);
-                const minTokenTime = Math.min(...tokenTimes).toFixed(2);
-                const maxTokenTime = Math.max(...tokenTimes).toFixed(2);
-                tokenStats = `平均${avgTokenTime}s (${minTokenTime}s~${maxTokenTime}s)`;
-            }
-            
-            // 计算总时长统计（block_end - block_start）
-            const totalDurations = [];
-            filteredData.forEach(row => {
-                const blockStart = parseFloat(row.block_start);
-                const blockEnd = parseFloat(row.block_end);
-                if (!isNaN(blockStart) && !isNaN(blockEnd) && blockEnd > blockStart) {
-                    totalDurations.push(blockEnd - blockStart);
-                }
-            });
-            
-            let durationStats = 'N/A';
-            if (totalDurations.length > 0) {
-                const avgDuration = (totalDurations.reduce((a, b) => a + b, 0) / totalDurations.length).toFixed(2);
-                const minDuration = Math.min(...totalDurations).toFixed(2);
-                const maxDuration = Math.max(...totalDurations).toFixed(2);
-                durationStats = `平均${avgDuration}s (${minDuration}s~${maxDuration}s)`;
-            }
-            
-            csvStats.innerHTML = `
-                <strong>数据统计:</strong> 
-                总行数: ${totalRows} | 
-                显示行数: ${filteredRows} | 
-                回答类型: ${answerRows} | 
-                文本回复: ${textReplyRows} | 
-                已评估: ${evaluatedRows}/${answerRows} | 
-                <strong>首Token时长:</strong> ${tokenStats} | 
-                <strong>段时长:</strong> ${durationStats} | 
-                <strong>平均分数:</strong> 
-                准确率: ${avgAccuracy} | 
-                专业度: ${avgProfessionalism} | 
-                语气: ${avgTone}
-            `;
-        }
-
-        // 文本展开/收起功能
-        function toggleText(element) {
-            element.classList.toggle('expanded');
-        }
-
-        // 获取列的默认宽度
-        function getColumnWidth(columnName) {
-            const widthMap = {
-                'question_id': 40,
-                'question_type': 60,
-                'question_text': 220,
-                'context': 150,
-                'chatid': 50,
-                'block_type': 50,
-                'block_subtype': 80,
-                'block_result': 500,  // 增加回答内容列的默认宽度
-                'block_start': 55,
-                'block_end': 55,
-                '最终准确率_分数': 80,
-                '最终准确率_理由': 150,  // 增加评估理由列的默认宽度
-                '专业度_分数': 80,
-                '专业度_理由': 150,     // 增加评估理由列的默认宽度
-                '语气合理_分数': 80,
-                '语气合理_理由': 150    // 增加评估理由列的默认宽度
-            };
-            return widthMap[columnName] || 150; // 默认宽度
-        }
-
-        // 判断列是否可排序
-        function isSortableColumn(columnName) {
-            const sortableColumns = [
-                'block_start',
-                'block_end', 
-                '最终准确率_分数',
-                '专业度_分数',
-                '语气合理_分数'
-            ];
-            return sortableColumns.includes(columnName);
-        }
-
-        // 初始化列排序功能
-        function initColumnSorting() {
-            const sortableHeaders = csvTableHead.querySelectorAll('th.sortable');
-            
-            sortableHeaders.forEach(header => {
-                header.addEventListener('click', (e) => {
-                    // 阻止点击调整器时的排序
-                    if (e.target.classList.contains('column-resizer')) {
-                        return;
-                    }
-                    
-                    const columnName = header.dataset.column;
-                    const currentSort = header.dataset.sort;
-                    
-                    // 清除其他列的排序状态
-                    sortableHeaders.forEach(h => {
-                        if (h !== header) {
-                            h.dataset.sort = 'none';
-                            h.classList.remove('sort-asc', 'sort-desc');
-                        }
-                    });
-                    
-                    // 切换当前列的排序状态
-                    let newSort;
-                    if (currentSort === 'none' || currentSort === 'desc') {
-                        newSort = 'asc';
-                    } else {
-                        newSort = 'desc';
-                    }
-                    
-                    header.dataset.sort = newSort;
-                    header.classList.remove('sort-asc', 'sort-desc');
-                    header.classList.add(`sort-${newSort}`);
-                    
-                    // 执行排序
-                    sortTableData(columnName, newSort);
-                    
-                    addLog('info', `按 ${columnName} 列进行${newSort === 'asc' ? '升序' : '降序'}排序`);
-                });
-            });
-        }
-
-        // 排序表格数据
-        function sortTableData(columnName, direction) {
-            if (!currentCsvData || currentCsvData.length === 0) return;
-            
-            // 应用过滤器
-            const filterValue = subtypeFilter.value;
-            let filteredData = [...currentCsvData];
-            
-            if (filterValue !== 'all') {
-                filteredData = currentCsvData.filter(row => row.block_subtype === filterValue);
-            }
-            
-            // 排序数据
-            filteredData.sort((a, b) => {
-                let valueA = a[columnName];
-                let valueB = b[columnName];
-                
-                // 处理数值类型
-                if (columnName === 'block_start' || columnName === 'block_end' || 
-                    columnName.includes('_分数')) {
-                    valueA = parseFloat(valueA) || 0;
-                    valueB = parseFloat(valueB) || 0;
-                }
-                
-                // 处理空值
-                if (valueA === null || valueA === undefined || valueA === '') valueA = direction === 'asc' ? Infinity : -Infinity;
-                if (valueB === null || valueB === undefined || valueB === '') valueB = direction === 'asc' ? Infinity : -Infinity;
-                
-                if (direction === 'asc') {
-                    return valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
-                } else {
-                    return valueA > valueB ? -1 : valueA < valueB ? 1 : 0;
-                }
-            });
-            
-            // 重新渲染表格内容（只重新渲染tbody，保持表头不变）
-            renderTableBody(filteredData);
-            
-            // 更新统计信息
-            updateCsvStats(currentCsvData, filteredData);
-        }
-
-        // 渲染表格主体
-        function renderTableBody(data) {
-            csvTableBody.innerHTML = data.map(row => {
-                const cells = Object.keys(row).map(key => {
-                    let value = row[key] || '';
-                    let cellClass = '';
-                    
-                    // 为评估分数列添加颜色样式
-                    if (key.includes('_分数') && value) {
-                        cellClass = `score-cell score-${value}`;
-                    }
-                    
-                    // 转换换行符转义字符为HTML换行
-                    if (typeof value === 'string') {
-                        // 处理CSV中的双反斜杠转义：\\n -> <br>
-                        value = value.replace(/\\\\n/g, '<br>');
-                        
-                        // 特殊处理context列：格式化JSON显示
-                        if (key === 'context' && value && value.trim() && value !== '<br>') {
-                            try {
-                                // 现在context应该是标准JSON数组格式
-                                const jsonData = JSON.parse(value.replace(/<br>/g, '\n'));
-                                
-                                if (Array.isArray(jsonData) && jsonData.length > 0) {
-                                    // 格式化为可读的对话历史
-                                    const formatted = jsonData.map((msg, index) => {
-                                        const role = msg.role === 'user' ? '用户' : '助手';
-                                        const content = msg.content || '';
-                                        return `${index + 1}. ${role}: ${content}`;
-                                    }).join('<br>');
-                                    value = formatted;
-                                }
-                            } catch (e) {
-                                // 解析失败时保持原样
-                                console.warn('Context解析失败:', e);
-                            }
-                        }
-                    }
-                    
-                    // 为长文本添加合适的显示样式
-                    if (typeof value === 'string' && value.replace(/<br>/g, '\n').length > 50) {
-                        // 对于特定的长文本列，使用自适应显示
-                        if (key === 'block_result' || key.includes('_理由')) {
-                            return `<td class="${cellClass}"><div class="text-adaptive" title="内容较长，已自动换行">${value}</div></td>`;
-                        } else {
-                            return `<td class="${cellClass}"><div class="text-truncate" onclick="toggleText(this)" title="点击展开/收起">${value}</div></td>`;
-                        }
-                    }
-                    
-                    return `<td class="${cellClass}">${value}</td>`;
-                }).join('');
-                
-                return `<tr>${cells}</tr>`;
-            }).join('');
-        }
-
-        // 初始化列调整器
-        function initColumnResizers() {
-            const resizers = document.querySelectorAll('.column-resizer');
-            let isResizing = false;
-            let currentResizer = null;
-            let startX = 0;
-            let startWidth = 0;
-
-            resizers.forEach(resizer => {
-                resizer.addEventListener('mousedown', (e) => {
-                    isResizing = true;
-                    currentResizer = resizer;
-                    startX = e.clientX;
-                    
-                    const columnIndex = parseInt(resizer.dataset.column);
-                    const th = csvTableHead.querySelector(`th:nth-child(${columnIndex + 1})`);
-                    startWidth = th.offsetWidth;
-                    
-                    resizer.classList.add('resizing');
-                    document.body.style.cursor = 'col-resize';
-                    
-                    e.preventDefault();
-                });
-            });
-
-            document.addEventListener('mousemove', (e) => {
-                if (!isResizing || !currentResizer) return;
-                
-                const diff = e.clientX - startX;
-                const newWidth = Math.max(50, startWidth + diff); // 最小宽度50px
-                
-                const columnIndex = parseInt(currentResizer.dataset.column);
-                const th = csvTableHead.querySelector(`th:nth-child(${columnIndex + 1})`);
-                
-                if (th) {
-                    th.style.width = newWidth + 'px';
-                    
-                    // 同时更新所有相应的td
-                    const rows = csvTableBody.querySelectorAll('tr');
-                    rows.forEach(row => {
-                        const td = row.querySelector(`td:nth-child(${columnIndex + 1})`);
-                        if (td) {
-                            td.style.width = newWidth + 'px';
-                        }
-                    });
-                }
-                
-                e.preventDefault();
-            });
-
-            document.addEventListener('mouseup', () => {
-                if (isResizing) {
-                    isResizing = false;
-                    if (currentResizer) {
-                        currentResizer.classList.remove('resizing');
-                        currentResizer = null;
-                    }
-                    document.body.style.cursor = 'default';
-                }
-            });
-        }
-
-        // 过滤器事件监听
-        subtypeFilter.addEventListener('change', () => {
-            if (currentCsvData) {
-                displayCsvData(currentCsvData);
-            }
-        });
-
-        // 刷新CSV数据按钮
-        refreshCsvBtn.addEventListener('click', () => {
-            if (currentCsvFile) {
-                loadCsvData(currentCsvFile);
-            }
-        });
-    </script>
+    <script src="js/app.js"></script>
 </body>
 </html>
