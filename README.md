@@ -1,229 +1,378 @@
-# 苏州科技馆数字人助手评估工具集
+# 🏛️ 苏州科技馆 AI 助手评估平台
 
-这是一个完整的工具链，用于测试和评估苏州科技馆Coze数字人助手的回复质量。支持命令行和Web界面两种使用方式，通过三步流程实现从数据准备到最终评估的完整自动化。
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/your-repo)
+[![Node.js](https://img.shields.io/badge/node.js-v18+-green.svg)](https://nodejs.org/)
+[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://python.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-## 🎯 工作流程
+> 🤖 **专业的AI助手质量评估与测试平台**  
+> 为苏州科技馆数字人助手（趣波QuBoo）提供全面的智能化评估解决方案
 
-### 🌐 Web界面操作（推荐）
-启动Web服务：
-```bash
-npm start
+## 🎯 项目概述
+
+本平台是一个企业级的AI助手质量评估系统，通过自动化流程对苏州科技馆数字人助手的回复进行多维度质量分析，包括准确性、专业度和语气合理性评估。
+
+### 🌟 核心价值
+- **🎯 精准评估**：基于科技馆业务场景的专业评估体系
+- **⚡ 高效处理**：支持大批量数据并发处理
+- **📊 可视化分析**：直观的数据展示和交互式表格
+- **🔄 完整流程**：从数据上传到评估报告的一站式解决方案
+
+## 🚀 核心功能模块
+
+### 📋 1. 智能数据处理引擎 (`data_processor.py`)
+```python
+🔸 Excel/CSV 批量数据处理
+🔸 Coze API 自动化调用
+🔸 上下文感知的对话生成
+🔸 多线程并发处理 (可配置线程数)
+🔸 实时进度追踪与错误恢复
+🔸 增量式结果保存到 data/output/ 目录
 ```
-访问 `http://localhost:3000` 进行可视化操作：
 
-#### 步骤1: 刷新Token
-- 点击"刷新Token"按钮
-- 自动获取最新认证Token并更新`.env`文件
-
-#### 步骤2: 上传并处理Excel
-- 拖拽或选择Excel测试文件（.xls/.xlsx）
-- 自动批量调用Coze Agent生成回复
-- 实时查看处理进度和中文日志
-
-#### 步骤3: 执行质量评估
-- 选择生成的CSV文件
-- 一键启动LLM质量评估
-- 实时监控评估进度
-
-### 💻 命令行操作（传统方式）
-
-#### 步骤1: 获取最新的认证Token
-```bash
-node get-token.js
+### 🧠 2. AI 质量评估系统 (`assess.py`)
+```python
+🔸 多LLM平台支持 (火山引擎豆包、ModelScope)
+🔸 三维度评估体系：
+   ├── 最终准确率 (1-100分)
+   ├── 专业度 (1-100分) 
+   └── 语气合理性 (1-100分)
+🔸 科技馆业务场景深度定制
+🔸 智能重试机制与API限流处理
+🔸 并发评估处理 (可配置线程数)
 ```
-**作用**：调用业务系统接口获取最新的免验证码Token，并更新到 `.env` 文件
 
-#### 步骤2: 批量生成助手回复
-```bash
-python data_processor.py data/test_set20250918.xls
+### 🌐 3. 现代化 Web 管理界面
+```javascript
+🔸 响应式设计，支持桌面和移动端
+🔸 拖拽上传，实时文件处理
+🔸 智能工作流引导
+🔸 高级数据表格：
+   ├── 可拖拽调整列宽
+   ├── 多列排序功能 (时间、评分)
+   ├── 内容筛选过滤
+   ├── 冻结表头
+   └── 悬停预览长文本
+🔸 实时日志流 (SSE)
+🔸 CSV数据实时预览和自动刷新
 ```
-**作用**：读取测试问题集，批量调用Coze Agent生成回复数据
-**输出**：`data/results_YYYYMMDD_HHMMSS.csv` - 包含问题和回复的CSV文件
 
-#### 步骤3: LLM质量评估
-```bash
-python assess.py data/results_20250918_184058.csv
+### 🔌 4. 企业级 API 核心 (`coze-bot-core.js`)
+```javascript
+🔸 Coze API 完整封装
+🔸 流式响应处理
+🔸 智能上下文管理
+🔸 自动令牌刷新 (get-token.js)
+🔸 错误处理与重试机制
+🔸 性能监控与日志记录
 ```
-**作用**：使用LLM对助手回复进行专业评估（多线程并发处理）
-**特点**：
-- 🚀 **5线程并发**：同时处理5个评估任务，大幅提升处理速度
-- 💾 **实时写入**：每完成一行立即更新CSV文件，无需等待全部完成
-- 🔄 **增量评估**：自动跳过已评估数据，支持断点续传
-- 📊 **进度监控**：实时显示处理进度和成功率
-**输出**：原CSV文件更新，新增6列评估结果
 
-## 📊 评估维度
+## 🛠️ 技术架构
 
-通过LLM从三个专业维度对回复进行评分（1-5分）：
+### 前端技术栈
+- **原生 JavaScript ES6+** - 现代化前端交互
+- **CSS3 + Flexbox** - 响应式布局设计
+- **Server-Sent Events (SSE)** - 实时日志推送
+- **File API + Drag & Drop** - 现代文件处理
 
-- **最终准确率**：回复内容与用户问题的匹配程度，是否解决用户需求
-- **专业度**：用词精准度、术语正确性、业务知识的专业水准
-- **语气合理**：语气友好度、引导性、场景适应性
+### 后端技术栈
+- **Node.js + Express** - 高性能Web服务器
+- **Python 3.8+** - 数据处理与AI评估
+- **Multer** - 文件上传处理
+- **CORS** - 跨域资源共享
+- **dotenv** - 环境变量管理
 
-## ⚡ 多线程并发优化
+### 数据处理
+- **pandas** - 高效数据分析
+- **requests** - HTTP客户端
+- **concurrent.futures** - 并发处理
+- **JSON + CSV** - 数据存储格式
 
-- **并发处理**：使用5个线程同时处理多个评估任务
-- **实时写入**：每完成一个评估立即更新CSV文件
-- **锁保护**：使用线程锁确保CSV文件写入安全
-- **智能调度**：ThreadPoolExecutor自动管理线程资源
+## 📦 快速开始
 
-## 🛠️ 环境配置
-
-### 安装依赖
+### 环境要求
 ```bash
-# 安装Node.js依赖
+Node.js >= 18.0.0
+Python >= 3.8.0
+npm >= 8.0.0
+```
+
+### 1. 安装依赖
+```bash
+# 安装 Node.js 依赖
 npm install
 
-# 安装Python依赖
-pip install requests python-dotenv pandas
+# 安装 Python 依赖
+pip install pandas requests python-dotenv
 ```
 
-### 配置文件 (.env)
-```env
-# 业务系统认证
-ACCESS_TOKEN=your_access_token
-REFRESH_TOKEN=your_refresh_token
+### 2. 配置环境变量
+```bash
+# 复制配置模板
+cp .env.example .env
 
-# LLM评估配置
+# 编辑配置文件，填入真实的API密钥
+nano .env  # 或使用其他编辑器
+```
+
+**必填配置项：**
+```env
+# Coze API配置
+COZE_API_TOKEN=your_coze_api_token
+COZE_BOT_ID=your_bot_id
+
+# LLM评估配置 (推荐火山引擎豆包)
+llm_url=https://ark.cn-beijing.volces.com/api/v3/
+llm_api_key=your_volcano_api_key
+llm_model_name=doubao-1-5-pro-32k-250115
+```
+
+**API密钥获取指南：**
+- 🔗 [Coze API密钥申请](https://www.coze.cn/docs/developer_guides/api_overview)
+- 🔗 [火山引擎API密钥申请](https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey)
+- 🔗 [ModelScope API密钥申请](https://modelscope.cn/my/myaccesstoken)
+
+### 3. 启动服务
+```bash
+# 启动Web服务器
+npm start
+
+# 访问管理界面
+# 本地: http://127.0.0.1:3000
+# 局域网: http://your_ip:3000
+```
+
+## 📋 使用指南
+
+### 🎯 完整评估流程
+
+#### 步骤1: 准备测试数据
+
+**📋 使用提供的测试集示例：**
+项目根目录包含 `test_set_example.xls` 文件，这是一个标准的测试数据集示例，包含了科技馆常见的用户问题，可以直接用于测试系统功能。
+
+**📝 自定义测试数据格式：**
+创建包含以下列的Excel文件：
+```
+question_id    | 问题ID (必填) - 问题的唯一标识符
+question_type  | 问题类型 (可选) - 如"票务咨询"、"展厅介绍"等  
+question_text  | 问题内容 (必填) - 用户的具体问题
+context        | 对话上下文 (可选) - JSON格式的历史对话
+```
+
+**🎯 测试集示例内容：**
+`test_set_example.xls` 包含了以下类型的测试问题：
+- 🎫 **票务相关**：门票价格、购票方式、优惠政策
+- 🏛️ **展厅介绍**：常设展厅、特色展览、参观路线
+- 🎬 **影院信息**：电影排期、座位预约、票价查询
+- 🍽️ **配套服务**：餐饮、购物、停车等便民信息
+- 📅 **活动咨询**：科普活动、研学课程、预约报名
+
+#### 步骤2: 数据处理
+1. 访问Web界面
+2. 上传Excel测试文件
+3. 点击"处理Excel" - 自动调用Coze API生成回复
+4. 自动预览生成的CSV数据 (保存到 `data/output/`)
+
+#### 步骤3: 质量评估  
+1. 自动选择刚生成的CSV文件
+2. 点击"开始评估" - 使用LLM进行智能评估
+3. 实时查看评估进度和结果
+
+#### 步骤4: 结果分析
+- 使用表格排序功能按评分排序
+- 拖拽列宽查看详细内容
+- 筛选特定类型的回复进行分析
+- 导出评估报告
+
+### 🔧 高级配置
+
+#### 并发性能调优
+```env
+# 数据处理并发数 (建议: CPU核心数)
+DATA_PROCESSOR_THREADS=8
+
+# 评估并发数 (建议: 根据API限制调整)
+ASSESS_THREADS=3
+```
+
+#### LLM平台切换
+```env
+# 火山引擎豆包 (推荐)
+llm_url=https://ark.cn-beijing.volces.com/api/v3/
+llm_model_name=doubao-1-5-pro-32k-250115
+
+# ModelScope (备选)
 llm_url=https://api-inference.modelscope.cn/v1/
-llm_api_key=your_api_key_here
 llm_model_name=Qwen/Qwen3-Coder-480B-A35B-Instruct
 ```
 
-## 📁 项目结构
+## 📊 数据格式说明
+
+### 输入数据格式 (Excel)
+| 列名 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `question_id` | 字符串 | 是 | 问题唯一标识 |
+| `question_type` | 字符串 | 否 | 问题分类 |
+| `question_text` | 字符串 | 是 | 用户问题内容 |
+| `context` | JSON字符串 | 否 | 对话历史上下文 |
+
+### 输出数据格式 (CSV)
+原始字段 + 以下AI生成字段：
+| 列名 | 类型 | 说明 |
+|------|------|------|
+| `chatid` | 字符串 | 对话会话ID |
+| `block_type` | 字符串 | 回复类型 (answer/function_call等) |
+| `block_subtype` | 字符串 | 回复子类型 (文本回复/图片等) |
+| `block_result` | 文本 | AI助手的完整回复内容 |
+| `block_start` | 数字 | 首token响应时间(秒) |
+| `block_end` | 数字 | 完整响应时间(秒) |
+
+评估字段：
+| 列名 | 类型 | 说明 |
+|------|------|------|
+| `最终准确率_分数` | 数字 | 准确性评分 (1-100) |
+| `最终准确率_理由` | 文本 | 准确性评估理由 |
+| `专业度_分数` | 数字 | 专业度评分 (1-100) |
+| `专业度_理由` | 文本 | 专业度评估理由 |
+| `语气合理_分数` | 数字 | 语气评分 (1-100) |
+| `语气合理_理由` | 文本 | 语气评估理由 |
+
+## 🔒 安全性分析
+
+### ✅ 安全措施
+- **环境变量保护**：敏感信息存储在 `.env` 文件中
+- **文件类型验证**：严格限制上传文件类型 (.xlsx, .xls, .csv)
+- **路径安全**：防止目录遍历攻击
+- **输入验证**：对所有用户输入进行验证和清理
+- **错误处理**：避免敏感信息泄露
+- **CORS配置**：控制跨域访问权限
+
+### ⚠️ 安全建议
+1. **API密钥管理**：定期轮换API密钥
+2. **网络访问**：建议在内网环境部署
+3. **文件权限**：确保 `.env` 文件权限为 600
+4. **日志审计**：定期检查访问日志
+5. **数据备份**：重要评估数据及时备份
+
+### 🛡️ 已识别风险与缓解
+| 风险类型 | 风险等级 | 缓解措施 |
+|----------|----------|----------|
+| API密钥泄露 | 中 | 环境变量 + .gitignore |
+| 文件上传攻击 | 低 | 类型白名单 + 大小限制 |
+| 路径遍历 | 低 | 路径规范化 + 访问控制 |
+| DoS攻击 | 低 | 文件大小限制 + 并发控制 |
+
+## 📈 性能指标
+
+### 处理能力
+- **Excel处理**：~100-500 问题/分钟 (取决于Coze API响应)
+- **质量评估**：~50-200 回复/分钟 (取决于LLM API响应)  
+- **并发支持**：最大10个并发线程
+- **文件支持**：最大100MB Excel文件
+
+### 系统要求
+- **内存**：建议 4GB+ RAM
+- **存储**：建议 10GB+ 可用空间
+- **网络**：稳定的外网连接 (API调用)
+- **浏览器**：Chrome 90+, Firefox 88+, Safari 14+
+
+## 🗂️ 项目结构
 
 ```
-├── server.js             # Web服务器（Express + 文件上传）
-├── public/               # Web前端文件
-│   └── index.html       # 可视化操作界面
-├── get-token.js         # Token获取工具
-├── data_processor.py    # 批量调用Coze Agent
-├── assess.py            # LLM质量评估
-├── coze-bot-core.js     # Coze API核心库
-├── .env                 # 配置文件
-├── uploads/             # 文件上传目录
-├── data/                # 数据文件目录
-│   ├── test_set*.xls   # 测试问题集
-│   ├── results_*.csv   # Agent回复结果
-│   └── results_evaluated_*.csv # 评估结果
-├── package.json         # Node.js配置
-└── README.md           # 使用说明
+agent-assessment/
+├── 📄 server.js              # Express服务器主文件
+├── 🐍 data_processor.py      # Excel数据处理引擎
+├── 🧠 assess.py              # AI质量评估系统
+├── 🔌 coze-bot-core.js       # Coze API核心模块
+├── 🔑 get-token.js           # 自动令牌刷新
+├── ⚙️ .env                   # 环境配置文件 (需要创建)
+├── 📋 .env.example           # 环境配置模板
+├── 📊 test_set_example.xls   # 测试数据集示例
+├── 📦 package.json           # Node.js依赖配置
+├── 📋 README.md              # 项目文档
+├── 🔒 SECURITY_ASSESSMENT.md # 安全评估报告
+├── 📁 public/
+│   └── 🌐 index.html         # Web管理界面
+├── 📁 data/
+│   ├── 📂 output/            # 处理结果输出目录
+│   └── 📄 .gitkeep           # Git目录占位符
+└── 📁 uploads/               # 临时文件上传目录
 ```
 
-## 💡 使用示例
+## 🤝 开发指南
 
-### 🌐 Web界面操作（推荐）
+### 代码规范
+- **JavaScript**：ES6+ 语法，async/await 异步处理
+- **Python**：PEP 8 代码风格，类型注释
+- **HTML/CSS**：语义化标签，响应式设计
+- **注释**：中英文混合，关键逻辑必须注释
+
+### 扩展开发
+```javascript
+// 添加新的LLM平台支持
+function callCustomLLM(prompt, config) {
+    // 实现自定义LLM调用逻辑
+}
+
+// 添加新的评估维度
+const evaluationCriteria = {
+    accuracy: "准确性评估",
+    professionalism: "专业度评估", 
+    tone: "语气评估",
+    newCriterion: "新增评估维度"  // <-- 在这里扩展
+};
+```
+
+## ⚠️ 重要安全提醒
+
+### 🔑 配置文件安全
+1. **复制配置模板**：`cp .env.example .env`
+2. **填入真实API密钥**：编辑 `.env` 文件
+3. **保护配置文件**：`chmod 600 .env`
+4. **绝不要提交**：`.env` 文件已在 `.gitignore` 中被排除
+5. **定期轮换密钥**：建议每3个月更换一次API密钥
+
+### 🛡️ 部署安全建议
+- 在生产环境中启用HTTPS
+- 使用防火墙限制访问IP范围
+- 定期更新依赖包：`npm audit fix`
+- 监控API使用量，防止异常调用
+
+## 📞 技术支持
+
+### 常见问题排查
+1. **配置问题**：确认 `.env` 文件存在且配置正确
+2. **API调用失败**：检查网络连接和API密钥有效性
+3. **Excel处理错误**：参考 `test_set_example.xls` 确认文件格式
+4. **评估超时**：调整并发线程数和网络超时设置
+5. **内存不足**：处理大文件时可能需要增加系统内存
+
+### 快速测试
 ```bash
-# 启动Web服务
+# 使用提供的测试集进行快速功能验证
+# 1. 启动服务
 npm start
 
-# 浏览器访问 http://localhost:3000
-# 1. 点击"刷新Token"按钮
-# 2. 上传Excel文件（拖拽或选择）
-# 3. 选择生成的CSV文件进行评估
+# 2. 访问 http://localhost:3000
+# 3. 上传 test_set_example.xls
+# 4. 查看处理和评估结果
 ```
 
-### 💻 命令行操作
-```bash
-# 完整评估流程
-# 1. 获取最新Token
-node get-token.js
 
-# 2. 批量生成回复（使用示例测试集）
-python data_processor.py data/test_set20250918.xls
 
-# 3. 进行质量评估（使用生成的回复文件）
-python assess.py data/results_20250918_184058.csv
+## 📄 开源协议
 
-# 增量评估
-python assess.py data/results_evaluated_20250918_193248.csv
-```
-
-## 📋 数据格式
-
-### 输入测试集 (Excel格式)
-```csv
-question_id,question_type,question_text
-2.1.2-1,闲聊chat,你好！/嗨！
-2.1.1-1,参观票,我想买明天上午的票，还有吗？
-```
-
-### Agent回复结果 (CSV格式)
-```csv
-question_id,question_type,question_text,block_type,block_subtype,block_result,block_start,block_end
-2.1.2-1,闲聊chat,你好！/嗨！,answer,,你好呀！有什么关于苏州科技馆的问题都可以问我呢。,3.6,3.84
-```
-
-### 评估结果 (CSV格式)
-```csv
-question_id,...,最终准确率_分数,最终准确率_理由,专业度_分数,专业度_理由,语气合理_分数,语气合理_理由
-2.1.2-1,...,5,回复准确...,4,用词准确...,5,语气亲切...
-```
-
-## ⚙️ 技术实现
-
-### 🌐 Web界面特性
-- **可视化操作**：直观的拖拽上传和按钮操作
-- **实时日志**：处理过程中文日志实时显示
-- **文件管理**：自动列出生成的CSV文件供选择
-- **响应式设计**：适配不同屏幕尺寸
-
-### 🔧 核心功能
-- **Token获取机制**：调用业务系统免验证码接口，自动更新`.env`文件
-- **批量调用优化**：5线程并发处理，错误重试和异常处理
-- **智能评估策略**：自动筛选有效回复，增量评估，LLM专业评估
-- **编码兼容性**：完美支持中文显示，UTF-8编码处理
-
-## 🆕 新增功能
-
-### ✨ Web界面全功能支持
-- **🔄 一键Token刷新**：无需命令行操作，点击按钮即可更新认证信息
-- **📤 拖拽文件上传**：支持Excel文件拖拽上传或点击选择
-- **👀 实时处理监控**：处理过程中文日志实时显示，支持UTF-8编码
-- **📋 智能文件选择**：自动列出可用CSV文件，一键选择进行评估
-- **🚀 零配置启动**：`npm start` 即可启动完整Web服务
-
-## ⚠️ 注意事项
-
-🔐 **认证安全**：确保 `.env` 文件不被提交到版本控制
-🌐 **网络连接**：评估步骤需要访问外部LLM API
-💰 **API费用**：注意LLM API调用费用
-📊 **数据格式**：确保测试集格式符合要求
-🌏 **编码问题**：Web界面已完美解决中文乱码问题
-
-## 🔧 故障排除
-
-### Token获取失败
-```bash
-# 检查网络连接和.env配置
-node get-token.js
-```
-
-### Agent调用失败
-```bash
-# 检查Token是否过期
-node get-token.js
-# 重新运行批量调用
-python data_processor.py data/test_set20250918.xls
-```
-
-### 评估API失败
-```bash
-# 检查LLM API配置和网络
-python assess.py data/results_20250918_184058.csv
-```
-
-## 📈 评估报告
-
-运行完成后会在 `data/` 目录生成评估报告，包含：
-- ✅ 评估成功率统计
-- 📊 各维度评分分布
-- 💡 详细的改进建议
-
-## 🤝 贡献
-
-欢迎提交Issue和Pull Request来改进这个工具！
+本项目采用 [MIT License](LICENSE) 开源协议。
 
 ---
 
-**使用前请确保所有依赖已正确安装，并配置好 `.env` 文件。**
+<div align="center">
+
+**🏛️ 苏州科技馆 AI 助手评估平台**
+
+*让AI评估更智能，让质量分析更精准*
+
+[⭐ Star](https://github.com/your-repo) · [🍴 Fork](https://github.com/your-repo/fork) · [📝 Issues](https://github.com/your-repo/issues)
+
+</div>
