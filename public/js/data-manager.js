@@ -25,6 +25,9 @@ class DataManager {
         const data = this.currentData;
         const headers = Object.keys(data[0]);
         
+        // 获取中文映射表
+        const columnMapping = window.app ? window.app.columnMapping : {};
+        
         // CSV字段转义函数 - 与服务器端完全一致
         function escapeCSVField(field) {
             if (field === null || field === undefined) return '';
@@ -41,8 +44,9 @@ class DataManager {
             return str;
         }
         
-        // 生成CSV内容
-        const headerRow = headers.map(escapeCSVField).join(',');
+        // 生成CSV内容 - 使用中文表头
+        const chineseHeaders = headers.map(header => columnMapping[header] || header);
+        const headerRow = chineseHeaders.map(escapeCSVField).join(',');
         const dataRows = data.map(record => 
             headers.map(header => escapeCSVField(record[header])).join(',')
         );
@@ -84,14 +88,14 @@ class DataManager {
         const data = this.currentData;
         const total = data.length;
         const evaluated = data.filter(row => 
-            row['准确率'] && row['专业度'] && row['语气合理度']
+            row['准确率'] && row['专业度'] && row['语气合理']
         ).length;
         
         // 计算平均分
         const scores = {
             accuracy: data.filter(r => r['准确率']).map(r => parseFloat(r['准确率'])),
             professionalism: data.filter(r => r['专业度']).map(r => parseFloat(r['专业度'])),
-            tone: data.filter(r => r['语气合理度']).map(r => parseFloat(r['语气合理度']))
+            tone: data.filter(r => r['语气合理']).map(r => parseFloat(r['语气合理']))
         };
         
         return {

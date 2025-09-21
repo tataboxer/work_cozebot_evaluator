@@ -4,6 +4,27 @@ class OptimizedAssessmentApp {
         this.initComplete = false;
         this.currentData = null;
         
+        // 中文表头映射
+        this.columnMapping = {
+            'question_id': '问题ID',
+            'question_type': '问题类型',
+            'question_text': '问题内容',
+            'context': '上下文',
+            'chatid': '对话ID',
+            'block_type': '块类型',
+            'block_subtype': '块子类型',
+            'block_result': '回答内容',
+            'block_start': '开始',
+            'block_end': '结束',
+            'expected_answer': '期望答案',
+            '准确率': '准确率',
+            '准确率_理由': '准确率理由',
+            '专业度': '专业度',
+            '专业度_理由': '专业度理由',
+            '语气合理': '语气合理',
+            '语气合理_理由': '语气合理理由'
+        };
+        
         // 快速初始化核心功能
         this.initElements();
         this.initEventListeners();
@@ -387,7 +408,7 @@ class OptimizedAssessmentApp {
         // 定义列顺序
         const columnOrder = [
             'question_text', 'context', 'block_result', 'block_start', 'block_end', 'expected_answer',
-            '准确率', '准确率_理由', '专业度', '专业度_理由', '语气合理度', '语气合理_理由',
+            '准确率', '准确率_理由', '专业度', '专业度_理由', '语气合理', '语气合理_理由',
             'question_id', 'question_type', 'chatid', 'block_type', 'block_subtype'
         ];
         
@@ -402,9 +423,10 @@ class OptimizedAssessmentApp {
                 ${columns.map(col => {
                     const width = this.getColumnWidth(col);
                     const isSortable = this.isSortableColumn(col);
+                    const displayName = this.columnMapping[col] || col;
                     return `
                         <th class="${isSortable ? 'sortable' : ''}" data-column="${col}" data-sort="none" style="width: ${width}px;">
-                            ${col}
+                            ${displayName}
                             <div class="resize-handle"></div>
                         </th>
                     `;
@@ -471,7 +493,7 @@ class OptimizedAssessmentApp {
             'block_end', 
             '准确率',
             '专业度',
-            '语气合理度'
+            '语气合理'
         ];
         return sortableColumns.includes(columnName);
     }
@@ -488,7 +510,7 @@ class OptimizedAssessmentApp {
             '准确率_理由': 150,
             '专业度': 80,
             '专业度_理由': 150,
-            '语气合理度': 80,
+            '语气合理': 80,
             '语气合理_理由': 150,
             'question_id': 40,
             'question_type': 60,  
@@ -548,7 +570,7 @@ class OptimizedAssessmentApp {
             let valueB = b[columnName];
             
             if (columnName === 'block_start' || columnName === 'block_end' || 
-                columnName === '准确率' || columnName === '专业度' || columnName === '语气合理度' || columnName.includes('_分数')) {
+                columnName === '准确率' || columnName === '专业度' || columnName === '语气合理' || columnName.includes('_分数')) {
                 valueA = parseFloat(valueA) || 0;
                 valueB = parseFloat(valueB) || 0;
             }
@@ -572,7 +594,7 @@ class OptimizedAssessmentApp {
         const columnOrder = [
             'question_text', 'context', 'block_result', 'block_start', 'block_end', 'expected_answer',
             '准确率', '准确率_理由', '专业度', '专业度_理由', 
-            '语气合理度', '语气合理_理由',
+            '语气合理', '语气合理_理由',
             'question_id', 'question_type', 'chatid', 'block_type', 'block_subtype'
         ];
         
@@ -588,7 +610,7 @@ class OptimizedAssessmentApp {
                 const originalValue = String(value);
                 const tooltipText = originalValue.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                 
-                if ((key === '准确率' || key === '专业度' || key === '语气合理度' || key.includes('_分数')) && value) {
+                if ((key === '准确率' || key === '专业度' || key === '语气合理' || key.includes('_分数')) && value) {
                     const score = parseFloat(value);
                     let scoreClass = '';
                     if (score >= 1 && score <= 20) {
@@ -637,7 +659,7 @@ class OptimizedAssessmentApp {
         const textReplyRows = filteredData.filter(row => row.block_subtype === '文本回复').length;
         
         const evaluatedRows = filteredData.filter(row => 
-            row['准确率'] && row['专业度'] && row['语气合理度']
+            row['准确率'] && row['专业度'] && row['语气合理']
         ).length;
         
         const scores = { accuracy: [], professionalism: [], tone: [] };
@@ -646,7 +668,7 @@ class OptimizedAssessmentApp {
         filteredData.forEach(row => {
             if (row['准确率']) scores.accuracy.push(parseFloat(row['准确率']));
             if (row['专业度']) scores.professionalism.push(parseFloat(row['专业度']));
-            if (row['语气合理度']) scores.tone.push(parseFloat(row['语气合理度']));
+            if (row['语气合理']) scores.tone.push(parseFloat(row['语气合理']));
             
             if (row.block_start && row.block_end) {
                 const startTime = parseFloat(row.block_start);
@@ -800,5 +822,5 @@ class OptimizedAssessmentApp {
 
 // 初始化应用
 document.addEventListener('DOMContentLoaded', () => {
-    new OptimizedAssessmentApp();
+    window.app = new OptimizedAssessmentApp();
 });
