@@ -13,84 +13,89 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
+            color: #2c3e50;
         }
 
         .container {
             width: 100%;
             margin: 0;
-            background: white;
+            background: transparent;
             min-height: 100vh;
         }
 
         .header {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-            padding: 40px 60px;
             text-align: center;
+            margin-bottom: 60px;
+            padding: 40px 60px;
         }
 
         .header h1 {
             font-size: 2.5rem;
-            margin-bottom: 10px;
             font-weight: 300;
+            color: #2c3e50;
+            margin-bottom: 10px;
         }
 
         .header p {
-            opacity: 0.9;
             font-size: 1.1rem;
+            color: #7f8c8d;
+            font-weight: 300;
         }
 
         .main-content {
-            padding: 60px;
+            padding: 0 60px;
         }
 
         .workflow {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 30px;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
         }
 
         .step-card {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 30px;
-            text-align: center;
-            border: 2px solid transparent;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
             transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
         }
 
         .step-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         }
 
         .step-number {
             width: 50px;
             height: 50px;
-            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
-            color: white;
             border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            font-weight: bold;
+            font-size: 1.2rem;
+            font-weight: 600;
             margin: 0 auto 20px;
         }
 
         .step-card h3 {
-            color: #333;
-            margin-bottom: 15px;
             font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2c3e50;
         }
         
         .step-card p {
-            color: #666;
-            margin-bottom: 20px;
+            color: #7f8c8d;
             line-height: 1.6;
+            margin-bottom: 25px;
         }
         
         .step-card p a {
@@ -110,23 +115,25 @@
             border: none;
             padding: 12px 30px;
             border-radius: 25px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
             width: 100%;
             max-width: 200px;
         }
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
         .btn:disabled {
-            background: #ccc;
+            background: #bdc3c7;
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
         }
 
         .file-input {
@@ -327,10 +334,11 @@
         /* CSV显示区域样式 */
         .csv-display-section {
             margin-top: 40px;
-            background: #f8f9fa;
-            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
             padding: 30px;
-            border: 2px solid #e9ecef;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
         }
 
         .csv-header {
@@ -343,9 +351,10 @@
         }
 
         .csv-title h3 {
-            color: #333;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2c3e50;
             margin: 0;
-            font-size: 1.5rem;
         }
 
         .csv-filename {
@@ -389,22 +398,23 @@
             color: white;
             border: none;
             padding: 8px 16px;
-            border-radius: 6px;
+            border-radius: 15px;
             font-size: 0.9rem;
             cursor: pointer;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
         }
 
         .btn-small:hover {
             transform: translateY(-1px);
-            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
 
         .csv-content {
             background: white;
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         }
 
         #csvTableContainer {
@@ -416,27 +426,59 @@
 
         #csvTable {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             font-size: 0.9rem;
             table-layout: fixed;
         }
 
         #csvTable th {
-            background: #f8f9fa;
-            color: #333;
+            background: #f8f9fa !important;
             font-weight: 600;
-            padding: 12px 8px;
+            color: #2c3e50;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 15px 20px;
             text-align: left;
-            border-bottom: 2px solid #dee2e6;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            border-bottom: 1px solid #f8f9fa;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 100 !important;
             user-select: none;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            border-right: 1px solid #dee2e6;
+        }
+
+        #csvTable th:last-child {
+            border-right: none;
+        }
+
+        .resize-handle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 5px;
+            height: 100%;
+            cursor: col-resize;
+            background: transparent;
+            z-index: 101;
+        }
+
+        .resize-handle:hover {
+            background: rgba(102, 126, 234, 0.3);
+        }
+
+        .resizing {
+            cursor: col-resize;
+        }
+
+        .resizing * {
+            cursor: col-resize !important;
         }
 
         #csvTable th.sortable:hover {
@@ -463,8 +505,9 @@
         }
 
         #csvTable td {
-            padding: 10px 8px;
-            border-bottom: 1px solid #f0f0f0;
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid #f8f9fa;
             vertical-align: top;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -485,6 +528,43 @@
             border-top: 1px solid #dee2e6;
             color: #666;
             font-size: 0.9rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .stats-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stats-label {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .stats-value {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .stats-separator {
+            color: #dee2e6;
+            font-weight: normal;
+        }
+
+        .timing-stats {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .timing-stats .stats-value {
+            color: #667eea;
+            font-weight: 700;
         }
 
         .score-cell {
@@ -492,11 +572,17 @@
             font-weight: bold;
         }
 
-        .score-5 { color: #28a745; }
-        .score-4 { color: #6f9c2f; }
-        .score-3 { color: #856404; }
-        .score-2 { color: #fd7e14; }
-        .score-1 { color: #dc3545; }
+        .score-1 { color: #dc3545; background: rgba(220, 53, 69, 0.1); }
+        .score-2 { color: #fd7e14; background: rgba(253, 126, 20, 0.1); }
+        .score-3 { color: #856404; background: rgba(133, 100, 4, 0.1); }
+        .score-4 { color: #6f9c2f; background: rgba(111, 156, 47, 0.1); }
+        .score-5 { color: #28a745; background: rgba(40, 167, 69, 0.1); }
+        
+        /* 时间列样式 */
+        .score-cell:not([class*="score-"]) {
+            color: #667eea;
+            font-family: 'Courier New', monospace;
+        }
 
         .text-adaptive {
             width: 100%;
@@ -507,11 +593,10 @@
         }
 
         .footer {
-            background: #f8f9fa;
-            padding: 20px;
             text-align: center;
-            color: #666;
-            border-top: 1px solid #eee;
+            padding: 40px 60px;
+            color: #7f8c8d;
+            margin-top: 60px;
         }
 
         @media (max-width: 768px) {
@@ -520,6 +605,10 @@
             }
 
             .main-content {
+                padding: 0 20px;
+            }
+
+            .footer {
                 padding: 30px 20px;
             }
 
@@ -540,13 +629,23 @@
                 left: 5vw;
                 top: 15vh;
             }
+
+            .csv-stats {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .timing-stats {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 苏州科技馆数字人助手评估工具</h1>
+            <h1>苏州科技馆 AI 助手评估平台</h1>
             <p>自动化测试和评估Coze数字人助手的回复质量</p>
         </div>
 
@@ -555,7 +654,7 @@
                 <!-- 步骤1: 刷新Token -->
                 <div class="step-card">
                     <div class="step-number">1</div>
-                    <h3>🔑 手动刷新认证Token</h3>
+                    <h3>刷新认证Token</h3>
                     <p>业务系统免验证码Token如过期，可手动刷新</p>
                     <button id="refreshTokenBtn" class="btn">刷新Token</button>
                     <div id="tokenStatus" class="status"></div>
@@ -564,7 +663,7 @@
                 <!-- 步骤2: 上传Excel -->
                 <div class="step-card">
                     <div class="step-number">2</div>
-                    <h3>📤 上传测试问题集</h3>
+                    <h3>上传测试问题集</h3>
                     <p>上传测试集（<a href="test_set_example.xls" download>下载样例</a>），自动调用Coze Agent生成回复</p>
                     <div class="file-input">
                         <input type="file" id="excelFile" accept=".xls,.xlsx">
@@ -584,7 +683,7 @@
                 <!-- 步骤3: 执行评估 -->
                 <div class="step-card">
                     <div class="step-number">3</div>
-                    <h3>📊 执行质量评估</h3>
+                    <h3>执行质量评估</h3>
                     <p>使用LLM对助手回复进行专业评估，生成详细的质量报告</p>
                     <div id="assessmentFileName" style="margin: 10px 0 25px 0; color: #666;">请先完成第2步Excel处理</div>
                     <button id="runAssessmentBtn" class="btn" disabled>开始评估</button>
@@ -602,17 +701,24 @@
             <div id="csvDisplaySection" class="csv-display-section" style="display: none;">
                 <div class="csv-header">
                     <div class="csv-title">
-                        <h3>📋 结果预览</h3>
+                        <h3>结果预览</h3>
                         <div id="csvFileName" class="csv-filename">未选择文件</div>
                     </div>
                     <div class="csv-controls">
+                        <label for="questionTypeFilter">问题类型:</label>
+                        <select id="questionTypeFilter">
+                            <option value="all">显示全部</option>
+                        </select>
+
                         <label for="subtypeFilter">筛选类型:</label>
                         <select id="subtypeFilter">
                             <option value="all">显示全部</option>
                             <option value="文本回复" selected>只显示文本回复</option>
                         </select>
-                        <button id="refreshCsvBtn" class="btn-small">刷新数据</button>
-                        <button id="downloadCsvBtn" class="btn-small" disabled>⬇️ 下载CSV</button>
+                        
+
+
+                        <button id="downloadCsvBtn" class="btn-small" disabled>下载CSV</button>
                     </div>
                 </div>
                 <div class="csv-content">
@@ -633,7 +739,7 @@
     </div>
 
     <!-- 日志面板 -->
-    <div class="log-toggle" id="logToggle">📋</div>
+    <div class="log-toggle" id="logToggle">LOG</div>
     <div class="log-panel" id="logPanel">
         <div class="log-header">
             <h3>操作日志</h3>
@@ -642,6 +748,9 @@
         <div class="log-content" id="logContent"></div>
     </div>
 
+    <!-- 主应用架构 -->
+    <script src="js/simple-list-renderer.js"></script>
+    <script src="js/data-manager.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

@@ -55,11 +55,11 @@ async function processSingleRow(rowData, sessionId) {
 
   if (evaluation) {
     try {
-      console.log(`✓ 评估成功 - 准确率:${evaluation['最终准确率']['分数']} 专业度:${evaluation['专业度']['分数']} 语气:${evaluation['语气合理']['分数']}`);
+      console.log(`✓ 评估成功 - 准确率:${evaluation['准确率']['分数']} 专业度:${evaluation['专业度']['分数']} 语气:${evaluation['语气合理']['分数']}`);
       
       // 广播成功结果
       if (global.broadcastLog) {
-        global.broadcastLog('success', `[${index + 1}] 评估成功 - 准确率:${evaluation['最终准确率']['分数']} 专业度:${evaluation['专业度']['分数']} 语气:${evaluation['语气合理']['分数']}`);
+        global.broadcastLog('success', `[${index + 1}] 评估成功 - 准确率:${evaluation['准确率']['分数']} 专业度:${evaluation['专业度']['分数']} 语气:${evaluation['语气合理']['分数']}`);
       }
       return { index, success: true, evaluation };
     } catch (error) {
@@ -77,12 +77,103 @@ async function processSingleRow(rowData, sessionId) {
  */
 router.post('/run-assessment', async (req, res) => {
   try {
-    const { csvFile } = req.body;
+    const { csvFile, data: frontendData } = req.body;
     
-    if (!csvFile) {
+    if (!csvFile && !frontendData) {
       return res.status(400).json({
         success: false,
         message: '缺少评估数据源'
+      });
+    }
+    
+    // 处理前端传递的数据
+    if (csvFile === 'frontend-data' && frontendData) {
+      console.log(`📊 开始执行前端数据评估: ${frontendData.length} 条记录`);
+      
+      const data = [...frontendData]; // 复制数据
+      
+      // 初始化新列
+      data.forEach(row => {
+        if (!('准确率' in row)) row['准确率'] = null;
+        if (!('准确率_理由' in row)) row['准确率_理由'] = null;
+        if (!('专业度_分数' in row)) row['专业度_分数'] = null;
+        if (!('专业度_理由' in row)) row['专业度_理由'] = null;
+        if (!('语气合理_分数' in row)) row['语气合理_分数'] = null;
+        if (!('语气合理_理由' in row)) row['语气合理_理由'] = null;
+      });
+      
+      // 筛选需要评估的行
+      const evaluationRows = data.filter((row, index) => {
+        return row.block_type === 'answer' && 
+               row.block_subtype === '文本回复' && 
+               (!row['准确率'] || !row['准确率_理由'] ||
+                !row['专业度_分数'] || !row['专业度_理由'] ||
+                !row['语气合理_分数'] || !row['语气合理_理由']);
+      });
+      
+      console.log(`需要评估的行数: ${evaluationRows.length}`);
+      
+      if (evaluationRows.length === 0) {
+        return res.json({
+          success: true,
+          message: '所有数据已评估完成',
+          data: data
+        });
+      }
+      
+      // 并发评估处理
+      const maxWorkers = parseInt(process.env.ASSESS_THREADS) || 3;
+      let evaluatedCount = 0;
+      let successCount = 0;
+      
+      const allPromises = evaluationRows.map(async (row, index) => {
+        const originalIndex = data.findIndex(dataRow => dataRow === row);
+        
+        try {
+          const result = await processSingleRow({ index: originalIndex, row }, 'frontend');
+          
+          evaluatedCount++;
+          
+          if (result.success && result.evaluation) {
+            successCount++;
+            
+            // 更新数据
+            const dataRow = data[result.index];
+            dataRow['准确率'] = result.evaluation['准确率']['分数'];
+            dataRow['准确率_理由'] = result.evaluation['准确率']['理由'];
+            dataRow['专业度_分数'] = result.evaluation['专业度']['分数'];
+            dataRow['专业度_理由'] = result.evaluation['专业度']['理由'];
+            dataRow['语气合理_分数'] = result.evaluation['语气合理']['分数'];
+            dataRow['语气合理_理由'] = result.evaluation['语气合理']['理由'];
+          }
+          
+          // 更新进度
+          const progressPercent = ((evaluatedCount / evaluationRows.length) * 100).toFixed(1);
+          if (global.broadcastLog) {
+            global.broadcastLog('progress', JSON.stringify({
+              current: evaluatedCount,
+              total: evaluationRows.length,
+              percent: progressPercent
+            }));
+          }
+          
+          return result;
+        } catch (error) {
+          evaluatedCount++;
+          console.error(`处理评估 ${index + 1} 失败:`, error);
+          return { index: originalIndex, success: false, error: error.message };
+        }
+      });
+      
+      // 等待所有任务完成
+      await Promise.all(allPromises);
+      
+      console.log(`🎉 前端数据评估完成！成功评估: ${successCount}/${evaluatedCount}`);
+      
+      return res.json({
+        success: true,
+        message: '评估完成',
+        data: data
       });
     }
     
@@ -105,8 +196,8 @@ router.post('/run-assessment', async (req, res) => {
       
       // 初始化新列（仅当列不存在时）
       data.forEach(row => {
-        if (!('最终准确率_分数' in row)) row['最终准确率_分数'] = null;
-        if (!('最终准确率_理由' in row)) row['最终准确率_理由'] = null;
+        if (!('准确率' in row)) row['准确率'] = null;
+        if (!('准确率_理由' in row)) row['准确率_理由'] = null;
         if (!('专业度_分数' in row)) row['专业度_分数'] = null;
         if (!('专业度_理由' in row)) row['专业度_理由'] = null;
         if (!('语气合理_分数' in row)) row['语气合理_分数'] = null;
@@ -117,7 +208,7 @@ router.post('/run-assessment', async (req, res) => {
       const evaluationRows = data.filter((row, index) => {
         return row.block_type === 'answer' && 
                row.block_subtype === '文本回复' && 
-               (!row['最终准确率_分数'] || !row['最终准确率_理由'] ||
+               (!row['准确率'] || !row['准确率_理由'] ||
                 !row['专业度_分数'] || !row['专业度_理由'] ||
                 !row['语气合理_分数'] || !row['语气合理_理由']);
       });
@@ -171,8 +262,8 @@ router.post('/run-assessment', async (req, res) => {
             
             // 更新数据
             const dataRow = data[result.index];
-            dataRow['最终准确率_分数'] = result.evaluation['最终准确率']['分数'];
-            dataRow['最终准确率_理由'] = result.evaluation['最终准确率']['理由'];
+            dataRow['准确率'] = result.evaluation['准确率']['分数'];
+            dataRow['准确率_理由'] = result.evaluation['准确率']['理由'];
             dataRow['专业度_分数'] = result.evaluation['专业度']['分数'];
             dataRow['专业度_理由'] = result.evaluation['专业度']['理由'];
             dataRow['语气合理_分数'] = result.evaluation['语气合理']['分数'];
