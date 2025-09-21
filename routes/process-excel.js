@@ -3,7 +3,6 @@ const express = require('express');
 const multer = require('multer');
 const xlsx = require('xlsx');
 const router = express.Router();
-const memoryStore = require('../lib/memory-store');
 const cozeClient = require('../lib/coze-client');
 
 // 文件上传配置
@@ -18,8 +17,6 @@ const upload = multer({
  * 处理Excel文件上传和Coze API调用
  */
 router.post('/process-excel', upload.single('excelFile'), async (req, res) => {
-  let sessionId = null;
-  
   try {
     // 验证文件上传
     if (!req.file) {
@@ -31,23 +28,19 @@ router.post('/process-excel', upload.single('excelFile'), async (req, res) => {
     
     console.log(`📊 收到Excel文件: ${req.file.originalname}`);
     
-    // 创建新会话
-    sessionId = memoryStore.createSession();
-    console.log(`📝 创建处理会话: ${sessionId}`);
-    
-    // 更新会话状态
-    memoryStore.updateSession(sessionId, {
-      status: 'processing',
-      fileName: req.file.originalname,
-      fileSize: req.file.size
-    });
-    
     // 解析Excel文件
     console.log('📋 开始解析Excel文件...');
-    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+    const workbook = xlsx.read(req.file.buffer, { 
+      type: 'buffer',
+      cellText: false,
+      cellDates: true
+    });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
-    const jsonData = xlsx.utils.sheet_to_json(worksheet);
+    const jsonData = xlsx.utils.sheet_to_json(worksheet, {
+      raw: false,
+      defval: ''
+    });
     
     if (jsonData.length === 0) {
       throw new Error('Excel文件为空或格式不正确');
@@ -64,12 +57,6 @@ router.post('/process-excel', upload.single('excelFile'), async (req, res) => {
       throw new Error(`缺少必要的列: ${missingColumns.join(', ')}`);
     }
     
-    // 存储原始Excel数据
-    memoryStore.updateSession(sessionId, {
-      excelData: jsonData,
-      status: 'excel_parsed'
-    });
-    
     console.log('🤖 开始调用Coze API处理问题...');
     
     // 批量处理问题
@@ -85,83 +72,29 @@ router.post('/process-excel', upload.single('excelFile'), async (req, res) => {
     
     console.log(`✅ Coze API处理完成，共生成 ${processedResults.length} 条记录`);
     
-    // 存储处理结果
-    memoryStore.updateSession(sessionId, {
-      processedData: processedResults,
-      status: 'completed',
-      processedCount: processedResults.length,
-      completedAt: new Date().toISOString()
-    });
-    
-    // 返回成功结果
+    // 直接返回处理结果，不存储到内存
     res.json({
       success: true,
       message: 'Excel处理完成',
-      sessionId: sessionId,
       data: {
         inputFile: req.file.originalname,
         inputRows: jsonData.length,
         outputRecords: processedResults.length,
-        previewData: processedResults // 返回全部数据作为预览
+        previewData: processedResults
       }
     });
     
   } catch (error) {
     console.error('❌ Excel处理失败:', error);
     
-    // 更新会话状态为错误
-    if (sessionId) {
-      memoryStore.updateSession(sessionId, {
-        status: 'error',
-        error: error.message,
-        errorAt: new Date().toISOString()
-      });
-    }
-    
     res.status(500).json({
       success: false,
       message: 'Excel处理失败',
-      error: error.message,
-      sessionId: sessionId
-    });
-  }
-});
-
-/**
- * 获取处理状态
- */
-router.get('/process-status/:sessionId', (req, res) => {
-  try {
-    const { sessionId } = req.params;
-    const session = memoryStore.getSession(sessionId);
-    
-    if (!session) {
-      return res.status(404).json({
-        success: false,
-        message: '会话不存在'
-      });
-    }
-    
-    res.json({
-      success: true,
-      session: {
-        id: session.id,
-        status: session.status,
-        fileName: session.fileName,
-        inputRows: session.excelData ? session.excelData.length : 0,
-        outputRecords: session.processedData ? session.processedData.length : 0,
-        error: session.error,
-        completedAt: session.completedAt
-      }
-    });
-    
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: '获取状态失败',
       error: error.message
     });
   }
 });
+
+
 
 module.exports = router;

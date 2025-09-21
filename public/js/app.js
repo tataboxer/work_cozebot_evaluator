@@ -1,12 +1,11 @@
 // 优化版前端应用 - 基于现有Express架构
 class OptimizedAssessmentApp {
     constructor() {
+        this.initComplete = false;
+        this.currentData = null;
+        
         this.initElements();
         this.initEventListeners();
-        this.currentData = null;
-        this.currentSessionId = null;
-        
-        // 等待依赖加载
         this.waitForDependencies();
     }
     
@@ -95,8 +94,7 @@ class OptimizedAssessmentApp {
     waitForDependencies() {
         const checkDeps = () => {
             if (window.dataManager && window.simpleListRenderer) {
-                console.log('所有依赖已加载');
-                // 不再恢复数据，每次刷新重新开始
+                this.initComplete = true;
             } else {
                 setTimeout(checkDeps, 100);
             }
@@ -234,21 +232,15 @@ class OptimizedAssessmentApp {
             const result = await response.json();
 
             if (result.success) {
-                // 存储数据到前端和内存
-                this.currentSessionId = result.sessionId;
-                
-                // 获取预览数据
                 if (result.data && result.data.previewData) {
                     this.currentData = result.data.previewData;
-                    window.dataManager.setData(this.currentData, this.currentSessionId);
+                    window.dataManager.setData(this.currentData);
                     
                     this.showStatus(this.excelStatus, 'success', `✅ Excel处理成功！生成 ${result.data.outputRecords} 条记录`);
                     this.refreshUI();
                     this.runAssessmentBtn.disabled = false;
                 } else {
-                    this.showStatus(this.excelStatus, 'success', `✅ Excel处理成功！会话ID: ${result.sessionId}`);
-                    this.currentSessionId = result.sessionId;
-                    this.runAssessmentBtn.disabled = false;
+                    this.showStatus(this.excelStatus, 'error', '❌ Excel处理失败：未返回数据');
                 }
                 
                 // 隐藏Excel进度条
@@ -275,7 +267,7 @@ class OptimizedAssessmentApp {
     }
 
     async runAssessment() {
-        if (!this.currentSessionId && !this.currentData) {
+        if (!this.currentData) {
             this.showStatus(this.assessmentStatus, 'error', '❌ 请先处理Excel文件');
             return;
         }
@@ -284,26 +276,16 @@ class OptimizedAssessmentApp {
         this.runAssessmentBtn.disabled = true;
         this.runAssessmentBtn.textContent = '评估中...';
         
-        // 显示进度条
         this.progressBar.style.display = 'block';
         this.progressFill.style.width = '0%';
         this.progressText.textContent = '准备开始评估...';
         this.progressText.style.display = 'block';
 
         try {
-            let requestBody;
-            if (this.currentData) {
-                // 使用前端数据
-                requestBody = { csvFile: 'frontend-data', data: this.currentData };
-            } else {
-                // 使用会话ID
-                requestBody = { csvFile: `session:${this.currentSessionId}` };
-            }
-
             const response = await fetch('/api/run-assessment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody)
+                body: JSON.stringify({ data: this.currentData })
             });
 
             const result = await response.json();
@@ -311,18 +293,10 @@ class OptimizedAssessmentApp {
             if (result.success) {
                 this.showStatus(this.assessmentStatus, 'success', '✅ 评估完成！');
                 
-                // 检查是否有返回数据
                 if (result.data) {
-                    // 直接使用返回的数据
                     this.currentData = result.data;
-                    window.dataManager.setData(this.currentData, this.currentSessionId);
+                    window.dataManager.setData(this.currentData);
                     this.refreshUI();
-                    console.log('评估结果已更新');
-                } else {
-                    // 回退到加载会话数据
-                    setTimeout(() => {
-                        this.loadSessionData();
-                    }, 1000);
                 }
             } else {
                 this.addLog('error', '评估失败: ' + result.message);
@@ -341,45 +315,21 @@ class OptimizedAssessmentApp {
         }
     }
 
-    async loadSessionData() {
-        if (!this.currentSessionId) return;
-        
-        try {
-            const response = await fetch(`/api/preview/${this.currentSessionId}`);
-            const result = await response.json();
-            
-            if (result.success && result.data) {
-                this.currentData = result.data;
-                window.dataManager.setData(this.currentData, this.currentSessionId);
-                this.refreshUI();
-            }
-        } catch (error) {
-            console.error('加载会话数据失败:', error);
-        }
-    }
+
 
     downloadCsv() {
+        if (!this.currentData || !window.dataManager) {
+            this.showStatus(this.assessmentStatus, 'error', '❌ 没有可下载的数据');
+            return;
+        }
+
         try {
-            if (this.currentData && window.dataManager) {
-                // 使用前端生成CSV
-                window.dataManager.downloadCSV(`assessment_results_${Date.now()}.csv`);
-                console.log('CSV下载成功（前端生成）');
-            } else if (this.currentSessionId) {
-                // 回退到服务器下载
-                const url = `/download-csv/${this.currentSessionId}`;
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = '';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                console.log('CSV下载成功（服务器生成）');
-            } else {
-                throw new Error('没有可下载的数据');
-            }
+            const filename = `assessment_results_${new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-')}.csv`;
+            window.dataManager.downloadCSV(filename);
+            this.showStatus(this.assessmentStatus, 'success', '✅ CSV下载成功');
         } catch (error) {
             console.error('CSV下载失败:', error);
-            alert('CSV下载失败: ' + error.message);
+            this.showStatus(this.assessmentStatus, 'error', `❌ CSV下载失败: ${error.message}`);
         }
     }
 
@@ -407,7 +357,9 @@ class OptimizedAssessmentApp {
 
         // 定义列顺序
         const columnOrder = [
-            'question_text', 'context', 'block_result', 'block_start', 'block_end','准确率', '准确率_理由', '专业度_分数', '专业度_理由', '语气合理_分数', '语气合理_理由','question_id', 'question_type', 'chatid', 'block_type', 'block_subtype'
+            'question_text', 'context', 'block_result', 'block_start', 'block_end', 'expected_answer',
+            '准确率', '准确率_理由', '专业度_分数', '专业度_理由', '语气合理_分数', '语气合理_理由',
+            'question_id', 'question_type', 'chatid', 'block_type', 'block_subtype'
         ];
         
         // 获取所有列，按顺序排列
@@ -465,9 +417,21 @@ class OptimizedAssessmentApp {
     }
 
     filterData() {
-        if (this.currentData) {
-            this.displayData(this.currentData);
+        if (!this.currentData) return;
+        
+        const subtypeFilter = this.subtypeFilter.value;
+        const questionTypeFilter = this.questionTypeFilter.value;
+        let filteredData = [...this.currentData];
+        
+        if (subtypeFilter !== 'all') {
+            filteredData = filteredData.filter(row => row.block_subtype === subtypeFilter);
         }
+        if (questionTypeFilter !== 'all') {
+            filteredData = filteredData.filter(row => row.question_type === questionTypeFilter);
+        }
+        
+        this.renderTableBody(filteredData);
+        this.updateCsvStats(this.currentData, filteredData);
     }
 
 
@@ -490,6 +454,7 @@ class OptimizedAssessmentApp {
             'block_result': 500,
             'block_start': 70,
             'block_end': 70,
+            'expected_answer': 300,
             '准确率': 80,
             '准确率_理由': 150,
             '专业度_分数': 80,
@@ -576,7 +541,7 @@ class OptimizedAssessmentApp {
     renderTableBody(data) {
         // 使用与表头相同的列顺序
         const columnOrder = [
-            'question_text', 'context', 'block_result', 'block_start', 'block_end',
+            'question_text', 'context', 'block_result', 'block_start', 'block_end', 'expected_answer',
             '准确率', '准确率_理由', '专业度_分数', '专业度_理由', 
             '语气合理_分数', '语气合理_理由',
             'question_id', 'question_type', 'chatid', 'block_type', 'block_subtype'
@@ -591,6 +556,8 @@ class OptimizedAssessmentApp {
             const cells = columns.map(key => {
                 let value = row[key] || '';
                 let cellClass = '';
+                const originalValue = String(value);
+                const tooltipText = originalValue.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                 
                 if (key.includes('_分数') && value) {
                     cellClass = `score-cell score-${value}`;
@@ -602,14 +569,14 @@ class OptimizedAssessmentApp {
                     }
                 }
                 
-                if (key === 'block_result' || key.includes('_理由')) {
+                if (key === 'block_result' || key.includes('_理由') || key === 'expected_answer') {
                     const rendered = window.simpleListRenderer ? 
                         window.simpleListRenderer.render(value) : 
                         String(value).replace(/\\n/g, '<br>');
-                    return `<td class="${cellClass}"><div class="text-adaptive">${rendered}</div></td>`;
+                    return `<td class="${cellClass}" title="${tooltipText}"><div class="text-adaptive">${rendered}</div></td>`;
                 } else {
-                    const rendered = String(value).replace(/\\n/g, '<br>');
-                    return `<td class="${cellClass}">${rendered}</td>`;
+                    const displayText = originalValue.length > 50 ? originalValue.substring(0, 50) + '...' : originalValue;
+                    return `<td class="${cellClass} long-text-cell" title="${tooltipText}">${displayText}</td>`;
                 }
             }).join('');
             

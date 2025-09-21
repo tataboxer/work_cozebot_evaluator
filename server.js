@@ -11,10 +11,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// 启动内存存储自动清理
-const memoryStore = require('./lib/memory-store');
-memoryStore.startAutoCleanup();
-console.log('🔄 内存存储自动清理已启动');
+
 
 // 注册新架构路由
 const processExcelRouter = require('./routes/process-excel');
@@ -133,13 +130,11 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 服务器启动成功！`);
   console.log(`📍 本地访问: http://localhost:${PORT}`);
   console.log(`🌐 局域网访问: http://${localIP}:${PORT}`);
-  console.log(`📊 新架构已启用 - 内存存储模式`);
+  console.log(`📊 新架构已启用 - 纯前端数据模式`);
 });
 
 // 优雅关闭
 process.on('SIGINT', () => {
   console.log('\n👋 服务器关闭');
-  // 停止自动清理
-  memoryStore.stopAutoCleanup();
   process.exit(0);
 });

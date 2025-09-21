@@ -1,30 +1,19 @@
-// 前端数据管理器 - 支持Vercel无状态架构
+// 前端数据管理器 - 纯前端无状态架构
 class DataManager {
     constructor() {
         this.currentData = null;
-        this.sessionId = null;
     }
     
-    // 存储数据到前端
-    setData(data, sessionId = null) {
+    setData(data) {
         this.currentData = data;
-        this.sessionId = sessionId;
     }
     
-    // 获取当前数据
     getData() {
         return this.currentData;
     }
     
-    // 禁用数据恢复
-    restoreData() {
-        return false;
-    }
-    
-    // 清理数据
     clearData() {
         this.currentData = null;
-        this.sessionId = null;
     }
     
     // 前端CSV生成 - 复制服务器端逻辑

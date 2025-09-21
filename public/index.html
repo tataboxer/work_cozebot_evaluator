@@ -513,6 +513,22 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+        
+        /* 悬浯tooltip样式 */
+        .cell-tooltip {
+            position: absolute;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            max-width: 400px;
+            word-wrap: break-word;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: none;
+            pointer-events: none;
+        }
 
         #csvTable tr:hover {
             background: #f8f9fa;
@@ -591,6 +607,11 @@
             max-height: 150px;
             overflow-y: auto;
         }
+        
+        .long-text-cell {
+            cursor: help;
+            position: relative;
+        }
 
         .footer {
             text-align: center;
@@ -664,7 +685,7 @@
                 <div class="step-card">
                     <div class="step-number">2</div>
                     <h3>上传测试问题集</h3>
-                    <p>上传测试集（<a href="test_set_example.xls" download>下载样例</a>），自动调用Coze Agent生成回复</p>
+                    <p>上传测试集（<a href="templates/test_set_example.xls" download>下载样例</a>），自动调用Coze Agent生成回复</p>
                     <div class="file-input">
                         <input type="file" id="excelFile" accept=".xls,.xlsx">
                         <label for="excelFile">选择Excel文件</label>

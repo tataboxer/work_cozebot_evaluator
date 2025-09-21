@@ -1,7 +1,7 @@
 {
   "name": "suzhou-science-museum-ai-assessment",
-  "version": "2.0.0",
-  "description": "苏州科技馆 AI 助手评估平台 - 纯内存架构",
+  "version": "3.0.0",
+  "description": "苏州科技馆 AI 助手评估平台 - 纯前端无状态架构",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -12,7 +12,8 @@
     "coze-api",
     "llm-evaluation",
     "science-museum",
-    "memory-architecture"
+    "stateless-architecture",
+    "frontend-data-management"
   ],
   "author": "苏州科技馆",
   "license": "MIT",
