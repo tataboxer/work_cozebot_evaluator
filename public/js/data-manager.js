@@ -84,14 +84,14 @@ class DataManager {
         const data = this.currentData;
         const total = data.length;
         const evaluated = data.filter(row => 
-            row['准确率'] && row['专业度_分数'] && row['语气合理_分数']
+            row['准确率'] && row['专业度'] && row['语气合理度']
         ).length;
         
         // 计算平均分
         const scores = {
             accuracy: data.filter(r => r['准确率']).map(r => parseFloat(r['准确率'])),
-            professionalism: data.filter(r => r['专业度_分数']).map(r => parseFloat(r['专业度_分数'])),
-            tone: data.filter(r => r['语气合理_分数']).map(r => parseFloat(r['语气合理_分数']))
+            professionalism: data.filter(r => r['专业度']).map(r => parseFloat(r['专业度'])),
+            tone: data.filter(r => r['语气合理度']).map(r => parseFloat(r['语气合理度']))
         };
         
         return {

@@ -99,9 +99,9 @@ router.post('/run-assessment', async (req, res) => {
     data.forEach(row => {
       if (!('准确率' in row)) row['准确率'] = null;
       if (!('准确率_理由' in row)) row['准确率_理由'] = null;
-      if (!('专业度_分数' in row)) row['专业度_分数'] = null;
+      if (!('专业度' in row)) row['专业度'] = null;
       if (!('专业度_理由' in row)) row['专业度_理由'] = null;
-      if (!('语气合理_分数' in row)) row['语气合理_分数'] = null;
+      if (!('语气合理度' in row)) row['语气合理度'] = null;
       if (!('语气合理_理由' in row)) row['语气合理_理由'] = null;
     });
     
@@ -110,8 +110,8 @@ router.post('/run-assessment', async (req, res) => {
       return row.block_type === 'answer' && 
              row.block_subtype === '文本回复' && 
              (!row['准确率'] || !row['准确率_理由'] ||
-              !row['专业度_分数'] || !row['专业度_理由'] ||
-              !row['语气合理_分数'] || !row['语气合理_理由']);
+              !row['专业度'] || !row['专业度_理由'] ||
+              !row['语气合理度'] || !row['语气合理_理由']);
     });
     
     console.log(`需要评估的行数: ${evaluationRows.length}`);
@@ -144,9 +144,9 @@ router.post('/run-assessment', async (req, res) => {
           const dataRow = data[result.index];
           dataRow['准确率'] = result.evaluation['准确率']['分数'];
           dataRow['准确率_理由'] = result.evaluation['准确率']['理由'];
-          dataRow['专业度_分数'] = result.evaluation['专业度']['分数'];
+          dataRow['专业度'] = result.evaluation['专业度']['分数'];
           dataRow['专业度_理由'] = result.evaluation['专业度']['理由'];
-          dataRow['语气合理_分数'] = result.evaluation['语气合理']['分数'];
+          dataRow['语气合理度'] = result.evaluation['语气合理']['分数'];
           dataRow['语气合理_理由'] = result.evaluation['语气合理']['理由'];
         }
         

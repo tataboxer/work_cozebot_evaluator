@@ -81,9 +81,9 @@ llm_url=https://ark.cn-beijing.volces.com/api/v3/
 llm_api_key=your_volcano_api_key
 llm_model_name=doubao-1-5-pro-32k-250115
 
-# 并发配置 (适配serverless环境)
-DATA_PROCESSOR_THREADS=5
-ASSESS_THREADS=5
+# 并发配置 (Railway优化)
+DATA_PROCESSOR_THREADS=3
+ASSESS_THREADS=2
 
 # 服务器端口
 PORT=3001
@@ -137,8 +137,8 @@ npm start
 - `block_result` - AI回复内容
 - `expected_answer` - 参考答案
 - `准确率` / `准确率_理由` - 准确性评估
-- `专业度_分数` / `专业度_理由` - 专业度评估
-- `语气合理_分数` / `语气合理_理由` - 语气评估
+- `专业度` / `专业度_理由` - 专业度评估
+- `语气合理度` / `语气合理_理由` - 语气评估
 
 ## 🔒 安全性
 

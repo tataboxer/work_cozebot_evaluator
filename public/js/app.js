@@ -387,7 +387,7 @@ class OptimizedAssessmentApp {
         // 定义列顺序
         const columnOrder = [
             'question_text', 'context', 'block_result', 'block_start', 'block_end', 'expected_answer',
-            '准确率', '准确率_理由', '专业度_分数', '专业度_理由', '语气合理_分数', '语气合理_理由',
+            '准确率', '准确率_理由', '专业度', '专业度_理由', '语气合理度', '语气合理_理由',
             'question_id', 'question_type', 'chatid', 'block_type', 'block_subtype'
         ];
         
@@ -470,8 +470,8 @@ class OptimizedAssessmentApp {
             'block_start',
             'block_end', 
             '准确率',
-            '专业度_分数',
-            '语气合理_分数'
+            '专业度',
+            '语气合理度'
         ];
         return sortableColumns.includes(columnName);
     }
@@ -486,9 +486,9 @@ class OptimizedAssessmentApp {
             'expected_answer': 300,
             '准确率': 80,
             '准确率_理由': 150,
-            '专业度_分数': 80,
+            '专业度': 80,
             '专业度_理由': 150,
-            '语气合理_分数': 80,
+            '语气合理度': 80,
             '语气合理_理由': 150,
             'question_id': 40,
             'question_type': 60,  
@@ -548,7 +548,7 @@ class OptimizedAssessmentApp {
             let valueB = b[columnName];
             
             if (columnName === 'block_start' || columnName === 'block_end' || 
-                columnName.includes('_分数')) {
+                columnName === '准确率' || columnName === '专业度' || columnName === '语气合理度' || columnName.includes('_分数')) {
                 valueA = parseFloat(valueA) || 0;
                 valueB = parseFloat(valueB) || 0;
             }
@@ -571,8 +571,8 @@ class OptimizedAssessmentApp {
         // 使用与表头相同的列顺序
         const columnOrder = [
             'question_text', 'context', 'block_result', 'block_start', 'block_end', 'expected_answer',
-            '准确率', '准确率_理由', '专业度_分数', '专业度_理由', 
-            '语气合理_分数', '语气合理_理由',
+            '准确率', '准确率_理由', '专业度', '专业度_理由', 
+            '语气合理度', '语气合理_理由',
             'question_id', 'question_type', 'chatid', 'block_type', 'block_subtype'
         ];
         
@@ -588,12 +588,29 @@ class OptimizedAssessmentApp {
                 const originalValue = String(value);
                 const tooltipText = originalValue.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                 
-                if (key.includes('_分数') && value) {
-                    cellClass = `score-cell score-${value}`;
+                if ((key === '准确率' || key === '专业度' || key === '语气合理度' || key.includes('_分数')) && value) {
+                    const score = parseFloat(value);
+                    let scoreClass = '';
+                    if (score >= 1 && score <= 20) {
+                        scoreClass = 'score-1';
+                    } else if (score >= 21 && score <= 40) {
+                        scoreClass = 'score-2';
+                    } else if (score >= 41 && score <= 60) {
+                        scoreClass = 'score-3';
+                    } else if (score >= 61 && score <= 80) {
+                        scoreClass = 'score-4';
+                    } else if (score >= 81 && score <= 100) {
+                        scoreClass = 'score-5';
+                    }
+                    cellClass = `score-cell ${scoreClass}`;
                 } else if ((key === 'block_start' || key === 'block_end') && value) {
-                    cellClass = 'score-cell';
                     const numValue = parseFloat(value);
                     if (!isNaN(numValue)) {
+                        if (key === 'block_start' && numValue >= 8) {
+                            cellClass = 'score-cell score-1';
+                        } else {
+                            cellClass = 'score-cell';
+                        }
                         value = numValue.toFixed(1) + 's';
                     }
                 }
@@ -620,7 +637,7 @@ class OptimizedAssessmentApp {
         const textReplyRows = filteredData.filter(row => row.block_subtype === '文本回复').length;
         
         const evaluatedRows = filteredData.filter(row => 
-            row['准确率'] && row['专业度_分数'] && row['语气合理_分数']
+            row['准确率'] && row['专业度'] && row['语气合理度']
         ).length;
         
         const scores = { accuracy: [], professionalism: [], tone: [] };
@@ -628,8 +645,8 @@ class OptimizedAssessmentApp {
         
         filteredData.forEach(row => {
             if (row['准确率']) scores.accuracy.push(parseFloat(row['准确率']));
-            if (row['专业度_分数']) scores.professionalism.push(parseFloat(row['专业度_分数']));
-            if (row['语气合理_分数']) scores.tone.push(parseFloat(row['语气合理_分数']));
+            if (row['专业度']) scores.professionalism.push(parseFloat(row['专业度']));
+            if (row['语气合理度']) scores.tone.push(parseFloat(row['语气合理度']));
             
             if (row.block_start && row.block_end) {
                 const startTime = parseFloat(row.block_start);
