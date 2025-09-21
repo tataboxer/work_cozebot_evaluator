@@ -4,34 +4,63 @@ class OptimizedAssessmentApp {
         this.initComplete = false;
         this.currentData = null;
         
+        // 快速初始化核心功能
         this.initElements();
         this.initEventListeners();
-        this.waitForDependencies();
+        
+        // 异步初始化非关键功能
+        setTimeout(() => {
+            this.waitForDependencies();
+        }, 100);
     }
     
     initSSE() {
-        this.eventSource = new EventSource('/api/logs');
-        
-        this.eventSource.onmessage = (event) => {
+        // 延迟初始SSE连接，完全不阻塞页面加载
+        setTimeout(() => {
             try {
-                const data = JSON.parse(event.data);
+                this.eventSource = new EventSource('/api/logs');
                 
-                // 处理进度更新
-                if (data.type === 'progress') {
-                    this.updateProgress(data.message);
-                } else if (data.type === 'excel-progress') {
-                    this.updateExcelProgress(data.message);
-                }
+                // 设置连接超时
+                const timeout = setTimeout(() => {
+                    if (this.eventSource && this.eventSource.readyState === EventSource.CONNECTING) {
+                        console.warn('SSE连接超时，关闭连接');
+                        this.eventSource.close();
+                    }
+                }, 3000);
                 
-                this.addLog(data.type, data.message);
+                this.eventSource.onopen = () => {
+                    clearTimeout(timeout);
+                    console.log('SSE连接已建立');
+                };
+                
+                this.eventSource.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        
+                        if (data.type === 'progress') {
+                            this.updateProgress(data.message);
+                        } else if (data.type === 'excel-progress') {
+                            this.updateExcelProgress(data.message);
+                        }
+                        
+                        this.addLog(data.type, data.message);
+                    } catch (error) {
+                        console.error('解析SSE消息失败:', error);
+                    }
+                };
+                
+                this.eventSource.onerror = (error) => {
+                    clearTimeout(timeout);
+                    console.warn('SSE连接错误，忽略并继续');
+                    if (this.eventSource) {
+                        this.eventSource.close();
+                    }
+                    // 不再自动重连，避免影响性能
+                };
             } catch (error) {
-                console.error('解析SSE消息失败:', error);
+                console.error('SSE初始化失败，忽略:', error);
             }
-        };
-        
-        this.eventSource.onerror = () => {
-            setTimeout(() => this.initSSE(), 3000);
-        };
+        }, 2000); // 2秒后初始化SSE
     }
     
     toggleLogPanel() {
@@ -141,7 +170,7 @@ class OptimizedAssessmentApp {
         this.logContent = document.getElementById('logContent');
         this.logPanelOpen = false;
         
-        // 初始化SSE
+        // 延迟初始化SSE，避免影响页面加载
         this.initSSE();
     }
 

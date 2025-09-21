@@ -8,8 +8,15 @@ const PORT = process.env.PORT || 3000;
 
 // 中间件配置
 app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// 静态文件服务优化
+app.use(express.static('public', {
+  maxAge: '1d', // 缓存一天
+  etag: true,
+  lastModified: true
+}));
 
 
 

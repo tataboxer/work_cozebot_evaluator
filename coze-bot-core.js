@@ -33,145 +33,145 @@ const PROJECT_ID = process.env.COZE_PROJECT_ID || 'fdb3e9f7-099b-3962-8ce5-0f67c
  * @param {Array} contextJson - 对话上下文JSON数组（从命令行参数覆盖）
  */
 function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
-  // 从命令行参数获取参数
-  if (process.argv.length > 2) {
-    content = process.argv[2];
-  }
-  
-  // 从命令行参数获取上下文JSON（第3个参数）
-  if (process.argv.length > 3 && process.argv[3] && process.argv[3] !== '') {
-    let jsonString = process.argv[3];
-    console.log(`🔍 尝试解析JSON字符串长度: ${jsonString.length}`);
-    console.log(`🔍 原始JSON字符串: ${jsonString}`);
-    
-    // 尝试修复PowerShell导致的JSON格式问题
-    if (jsonString.includes('{') && !jsonString.includes('"role"')) {
-      console.log('🔧 检测到PowerShell格式问题，尝试修复...');
-      // 修复缺失的引号
-      jsonString = jsonString
-        .replace(/([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":')
-        .replace(/:([^,}\]]+)([,}\]])/g, ':"$1"$2')
-        .replace(/:""/g, ':""')
-        .replace(/:"{/g, ':{')
-        .replace(/}"([,\]])/g, '}$1');
-      console.log(`🔧 修复后的JSON: ${jsonString}`);
+  return new Promise((resolve, reject) => {
+    // 从命令行参数获取参数（仅在直接运行时）
+    if (!content && process.argv.length > 2) {
+      content = process.argv[2];
     }
     
-    contextJson = safeJsonParse(jsonString);
-    if (contextJson) {
-      console.log(`📋 从命令行参数获取上下文: ${contextJson.length} 条消息`);
-    }
-  }
-  
-  // 使用环境变量中的配置
-  const accessToken = DEFAULT_ACCESS_TOKEN;
-  const apiToken = DEFAULT_COZE_API_TOKEN;
-  const botId = DEFAULT_BOT_ID;
-
-  // 记录请求开始时间
-  const startTime = Date.now();
-  console.log(`开始调用Coze Bot... (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
-  
-  // 准备对话消息 - 优先使用命令行参数，然后是COZE_CONTEXT，最后是简单模式
-  let additionalMessages = [];
-  let contextMessages = null;
-  
-  // 1. 优先使用解析的上下文参数
-  if (contextJson && contextJson.length > 0) {
-    contextMessages = contextJson;
-    console.log(`📋 使用命令行上下文: ${contextMessages.length} 条历史消息`);
-  }
-  // 2. 其次使用环境变量的上下文
-  else {
-    try {
-      const contextConfig = process.env.COZE_CONTEXT;
-      if (contextConfig && contextConfig.trim() && contextConfig !== '[]') {
-        contextMessages = safeJsonParse(contextConfig);
-        console.log(`📋 使用环境变量上下文: ${contextMessages.length} 条历史消息`);
+    // 从命令行参数获取上下文JSON（第3个参数）
+    if (!contextJson && process.argv.length > 3 && process.argv[3] && process.argv[3] !== '') {
+      let jsonString = process.argv[3];
+      console.log(`🔍 尝试解析JSON字符串长度: ${jsonString.length}`);
+      console.log(`🔍 原始JSON字符串: ${jsonString}`);
+      
+      // 尝试修复PowerShell导致的JSON格式问题
+      if (jsonString.includes('{') && !jsonString.includes('"role"')) {
+        console.log('🔧 检测到PowerShell格式问题，尝试修复...');
+        // 修复缺失的引号
+        jsonString = jsonString
+          .replace(/([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":')
+          .replace(/:([^,}\]]+)([,}\]])/g, ':"$1"$2')
+          .replace(/:""/g, ':""')
+          .replace(/:"{/g, ':{')
+          .replace(/}"([,\]])/g, '}$1');
+        console.log(`🔧 修复后的JSON: ${jsonString}`);
       }
-    } catch (error) {
-      console.log(`⚠️ 环境变量上下文解析失败: ${error.message}`);
-    }
-  }
-  
-  // 构建最终的消息数组
-  if (contextMessages && contextMessages.length > 0) {
-    // 上下文模式 - 历史消息 + 当前问题
-    additionalMessages = [
-      ...contextMessages,  // 历史上下文
-      {
-        "role": "user",
-        "content": content,
-        "content_type": "text"
+      
+      contextJson = safeJsonParse(jsonString);
+      if (contextJson) {
+        console.log(`📋 从命令行参数获取上下文: ${contextJson.length} 条消息`);
       }
-    ];
-    console.log(`🎯 当前问题: ${content}`);
+    }
     
-    // 打印上下文内容用于验证
-    console.log(`🔍 上下文内容:`);
-    contextMessages.forEach((msg, index) => {
-      console.log(`  ${index + 1}. [${msg.role}] ${msg.content || msg.content_type || 'No content'}`);
-    });
-  } else {
-    // 简单模式 - 只传当前问题
-    additionalMessages = [
-      {
-        "role": "user",
-        "content": content,
-        "content_type": "text"
-      }
-    ];
-    console.log(`💬 使用简单模式: 单独问答`);
-  }
+    // 使用环境变量中的配置
+    const accessToken = DEFAULT_ACCESS_TOKEN;
+    const apiToken = DEFAULT_COZE_API_TOKEN;
+    const botId = DEFAULT_BOT_ID;
 
-  // 准备请求数据 - 使用流式响应
-  const requestData = {
-    "bot_id": botId,
-    "user_id": "Leo",
-    "stream": true, // 使用流式响应
-    "auto_save_history": true,
-    "additional_messages": additionalMessages,
-    "chat_id": null,
-    "conversation_id": null,
-    "workflow_id": null,
-    "parameters": {
-      "client_type": "TS",
-      "access_token": accessToken,
-      "project_id": PROJECT_ID,
-      "conversation_id": "",
-      "user_name": "Leo"
-    }
-  };
-
-  // 准备HTTPS请求选项
-  const options = {
-    hostname: 'api.coze.cn',
-    port: 443,
-    path: '/v3/chat',
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiToken}`,
-      'Content-Type': 'application/json'
-    }
-  };
-
-  // 验证环境变量
-  validateEnvironment();
+    console.log(`开始调用Coze Bot...`);
   
-  console.log('发送流式请求数据:', JSON.stringify(requestData, null, 2));
-
-  console.log(`请求开始时间: ${(Date.now() - startTime) / 1000.0}s`);
-
-  // 创建HTTPS请求
-  const req = https.request(options, (res) => {
-    // 检查HTTP状态码
-    if (res.statusCode < 200 || res.statusCode >= 300) {
-      console.error(`HTTP错误: ${res.statusCode}`);
-      console.error(`请求失败，状态码: ${res.statusCode}`);
-      return;
+    // 准备对话消息 - 优先使用命令行参数，然后是COZE_CONTEXT，最后是简单模式
+    let additionalMessages = [];
+    let contextMessages = null;
+    
+    // 1. 优先使用解析的上下文参数
+    if (contextJson && contextJson.length > 0) {
+      contextMessages = contextJson;
+      console.log(`📋 使用命令行上下文: ${contextMessages.length} 条历史消息`);
     }
-    console.log(`流式响应状态码: ${res.statusCode} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
-    console.log(`流式响应头: ${JSON.stringify(res.headers)} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
+    // 2. 其次使用环境变量的上下文
+    else {
+      try {
+        const contextConfig = process.env.COZE_CONTEXT;
+        if (contextConfig && contextConfig.trim() && contextConfig !== '[]') {
+          contextMessages = safeJsonParse(contextConfig);
+          console.log(`📋 使用环境变量上下文: ${contextMessages.length} 条历史消息`);
+        }
+      } catch (error) {
+        console.log(`⚠️ 环境变量上下文解析失败: ${error.message}`);
+      }
+    }
+    
+    // 构建最终的消息数组
+    if (contextMessages && contextMessages.length > 0) {
+      // 上下文模式 - 历史消息 + 当前问题
+      additionalMessages = [
+        ...contextMessages,  // 历史上下文
+        {
+          "role": "user",
+          "content": content,
+          "content_type": "text"
+        }
+      ];
+      console.log(`🎯 当前问题: ${content}`);
+      
+      // 打印上下文内容用于验证
+      console.log(`🔍 上下文内容:`);
+      contextMessages.forEach((msg, index) => {
+        console.log(`  ${index + 1}. [${msg.role}] ${msg.content || msg.content_type || 'No content'}`);
+      });
+    } else {
+      // 简单模式 - 只传当前问题
+      additionalMessages = [
+        {
+          "role": "user",
+          "content": content,
+          "content_type": "text"
+        }
+      ];
+      console.log(`💬 使用简单模式: 单独问答`);
+    }
+
+    // 准备请求数据 - 使用流式响应
+    const requestData = {
+      "bot_id": botId,
+      "user_id": "Leo",
+      "stream": true, // 使用流式响应
+      "auto_save_history": true,
+      "additional_messages": additionalMessages,
+      "chat_id": null,
+      "conversation_id": null,
+      "workflow_id": null,
+      "parameters": {
+        "client_type": "TS",
+        "access_token": accessToken,
+        "project_id": PROJECT_ID,
+        "conversation_id": "",
+        "user_name": "Leo"
+      }
+    };
+
+    // 准备HTTPS请求选项
+    const options = {
+      hostname: 'api.coze.cn',
+      port: 443,
+      path: '/v3/chat',
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiToken}`,
+        'Content-Type': 'application/json'
+      }
+    };
+
+    // 验证环境变量
+    validateEnvironment();
+    
+    console.log('发送流式请求数据:', JSON.stringify(requestData, null, 2));
+
+    // 创建HTTPS请求
+    const req = https.request(options, (res) => {
+      // 在这里开始计时 - 请求发送后开始计算响应时间
+      const startTime = Date.now();
+      console.log(`请求已发送，开始计时: ${(Date.now() - startTime) / 1000.0}s`);
+      // 检查HTTP状态码
+      if (res.statusCode < 200 || res.statusCode >= 300) {
+        console.error(`HTTP错误: ${res.statusCode}`);
+        console.error(`请求失败，状态码: ${res.statusCode}`);
+        return;
+      }
+      console.log(`流式响应状态码: ${res.statusCode} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
+      console.log(`流式响应头: ${JSON.stringify(res.headers)} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
 
     let eventCount = 0;
     let chatId = null; // 用于存储chat_id
@@ -217,7 +217,7 @@ function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
               console.log(`🆔 获取到Chat ID: ${chatId} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
             }
             
-            // 记录每个消息ID的首token时间
+            // 记录每个消息ID的首token时间（相对于当前问题开始时间）
             if (eventData.id && !firstTokenTimes.has(eventData.id)) {
               const elapsed = (Date.now() - startTime) / 1000;
               firstTokenTimes.set(eventData.id, elapsed.toFixed(2));
@@ -233,7 +233,7 @@ function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
             
             // 如果是 message.completed 事件，存储完整回答和类型
             if (currentEvent === 'conversation.message.completed') {
-              // 记录消息完成的时间作为block_end（无论是否有content）
+              // 记录消息完成的时间作为block_end（相对于当前问题开始时间）
               const completeTime = ((Date.now() - startTime) / 1000.0).toFixed(2);
               if (!messageEndTimes.has(eventData.id)) {
                 messageEndTimes.set(eventData.id, completeTime);
@@ -275,23 +275,15 @@ function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
     res.on('end', () => {
       console.log(`\n✅ Coze Bot调用完成！ (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
 
-      // 验证additional_messages的内容
-      console.log('\n🔍 验证additional_messages内容:');
-      requestData.additional_messages.forEach((msg, index) => {
-        console.log(`  消息 ${index + 1}: [${msg.role}] ${msg.content || msg.content_type || 'No content'}`);
-      });
-
-      // 收集和输出分析结果
+      // 收集分析结果
       const results = [];
       let segmentCount = 0;
 
-      console.log(`\n=== 回答分段分析 (${((Date.now() - startTime) / 1000.0).toFixed(3)}s) ===`);
       console.log(`🆔 Chat ID: ${chatId || '未获取到'}`);
 
       // 按照消息ID的顺序输出结果
       const orderedIds = Array.from(firstTokenTimes.keys());
       orderedIds.forEach((id, index) => {
-        // 只输出非verbose类型的消息
         const type = messageTypes.get(id) || 'unknown';
         if (type !== 'verbose') {
           segmentCount++;
@@ -301,23 +293,20 @@ function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
           console.log(`结束时间: ${blockEndTime}秒`);
           console.log(`消息类型: ${type}`);
 
-          // 显示子类型（如果存在）
           const subType = messageSubTypes.get(id);
           if (subType) {
             console.log(`消息子类型: ${subType}`);
           } else if (type === 'answer') {
-            // 如果是answer类型但没有子类型，默认显示文本回复
             console.log(`消息子类型: 文本回复`);
           }
 
           console.log(`内容长度: ${(messageContents.get(id) || '').length}字符`);
           console.log(`内容: ${messageContents.get(id) || '无内容'}`);
 
-          // 收集结果用于返回
           results.push({
             block_id: segmentCount,
             block_type: type,
-            block_subtype: subType || '',
+            block_subtype: subType || (type === 'answer' ? '文本回复' : ''),
             block_result: messageContents.get(id) || '无内容',
             block_start: parseFloat(firstTokenTimes.get(id)),
             block_end: parseFloat(messageEndTimes.get(id) || firstTokenTimes.get(id))
@@ -328,18 +317,20 @@ function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
       console.log(`\n总计分段数: ${segmentCount} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
 
       // 返回结果
-      return results;
+      resolve({ segments: results, chatId });
     });
   });
 
   // 处理请求错误
   req.on('error', (error) => {
     console.error(`❌ 流式请求失败: ${error.message} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
+    reject(error);
   });
 
-  // 发送请求数据
-  req.write(JSON.stringify(requestData));
-  req.end();
+    // 发送请求数据
+    req.write(JSON.stringify(requestData));
+    req.end();
+  });
 }
 
 // 导出函数供外部调用
