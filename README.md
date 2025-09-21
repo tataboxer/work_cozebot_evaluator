@@ -48,7 +48,7 @@
 
 ### 后端技术栈
 - **Node.js + Express** - Web服务器
-- **Multer** - 文件上传处理
+- **Multer (内存存储)** - Excel文件内存处理，无磁盘存储
 - **dotenv** - 环境变量管理
 
 ### 数据处理
@@ -81,9 +81,9 @@ llm_url=https://ark.cn-beijing.volces.com/api/v3/
 llm_api_key=your_volcano_api_key
 llm_model_name=doubao-1-5-pro-32k-250115
 
-# 并发配置
-DATA_PROCESSOR_THREADS=15
-ASSESS_THREADS=15
+# 并发配置 (适配serverless环境)
+DATA_PROCESSOR_THREADS=5
+ASSESS_THREADS=5
 
 # 服务器端口
 PORT=3001
@@ -145,6 +145,7 @@ npm start
 - 环境变量保护敏感信息
 - 文件类型验证
 - 输入验证和清理
+- **无文件存储**: 所有数据处理均在内存中完成
 
 ## 📈 性能指标 
 

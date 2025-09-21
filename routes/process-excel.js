@@ -10,6 +10,18 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB限制
+  },
+  fileFilter: (req, file, cb) => {
+    // 只允许Excel文件
+    const allowedMimes = [
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('只允许上传Excel文件(.xls, .xlsx)'));
+    }
   }
 });
 
