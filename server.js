@@ -1,7 +1,14 @@
 const express = require('express');
 const cors = require('cors');
 const { spawn } = require('child_process');
-require('dotenv').config(); // 加载环境变量
+require('dotenv').config({ override: true }); // 加载环境变量，允许Railway环境变量覆盖
+
+// Railway环境变量检查
+console.log('=== 环境变量检查 ===');
+console.log('ACCESS_KEY:', process.env.ACCESS_KEY ? '✅ 已设置' : '❌ 未设置');
+console.log('COZE_API_TOKEN:', process.env.COZE_API_TOKEN ? '✅ 已设置' : '❌ 未设置');
+console.log('llm_api_key:', process.env.llm_api_key ? '✅ 已设置' : '❌ 未设置');
+console.log('========================');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
