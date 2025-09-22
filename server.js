@@ -1,11 +1,15 @@
 const express = require('express');
 const cors = require('cors');
 const { spawn } = require('child_process');
-require('dotenv').config({ override: true }); // 加载环境变量，允许Railway环境变量覆盖
+// 本地开发时加载.env文件，Railway不需要
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 
-// Railway环境变量检查
+// 环境变量检查
 console.log('=== 环境变量检查 ===');
-console.log('ACCESS_KEY:', process.env.ACCESS_KEY ? '✅ 已设置' : '❌ 未设置');
+console.log('NODE_ENV:', process.env.NODE_ENV || 'development');
+console.log('ACCESS_KEY:', process.env.ACCESS_KEY ? `✅ 已设置 (${process.env.ACCESS_KEY})` : '❌ 未设置');
 console.log('COZE_API_TOKEN:', process.env.COZE_API_TOKEN ? '✅ 已设置' : '❌ 未设置');
 console.log('llm_api_key:', process.env.llm_api_key ? '✅ 已设置' : '❌ 未设置');
 console.log('========================');
