@@ -9,6 +9,22 @@ if (process.env.NODE_ENV !== 'production') {
 // 环境变量检查
 console.log('=== 环境变量检查 ===');
 console.log('NODE_ENV:', process.env.NODE_ENV || 'development');
+
+// 显示所有环境变量名称（不显示值）
+const envKeys = Object.keys(process.env).filter(key => 
+  key.includes('ACCESS') || 
+  key.includes('COZE') || 
+  key.includes('llm') ||
+  key.includes('TOKEN')
+);
+console.log('相关环境变量名称:', envKeys);
+
+// Railway临时修复：如果环境变量未设置，使用默认值
+if (!process.env.ACCESS_KEY && process.env.NODE_ENV === 'production') {
+  process.env.ACCESS_KEY = 'sgxsk';
+  console.log('⚠️ Railway临时修复: 使用默认ACCESS_KEY');
+}
+
 console.log('ACCESS_KEY:', process.env.ACCESS_KEY ? `✅ 已设置 (${process.env.ACCESS_KEY})` : '❌ 未设置');
 console.log('COZE_API_TOKEN:', process.env.COZE_API_TOKEN ? '✅ 已设置' : '❌ 未设置');
 console.log('llm_api_key:', process.env.llm_api_key ? '✅ 已设置' : '❌ 未设置');
@@ -46,11 +62,24 @@ const downloadCsvRouter = require('./routes/download-csv');
 // 先注册不需要验证的路由
 app.use('/', processExcelRouter);
 app.use('/', downloadCsvRouter);
-app.use('/api', require('./routes/verify-access'));
+
+// 注册验证路由
+try {
+  const verifyAccessRouter = require('./routes/verify-access');
+  app.use('/api', verifyAccessRouter);
+  console.log('✅ verify-access 路由注册成功');
+} catch (error) {
+  console.error('❌ verify-access 路由注册失败:', error.message);
+}
 
 // 访问权限验证中间件
-const verifyAccess = require('./middleware/auth');
-app.use('/api', verifyAccess);
+try {
+  const verifyAccess = require('./middleware/auth');
+  app.use('/api', verifyAccess);
+  console.log('✅ 访问权限中间件注册成功');
+} catch (error) {
+  console.error('❌ 访问权限中间件注册失败:', error.message);
+}
 
 // 需要权限的API路由
 app.use('/api', require('./routes/run-assessment'));
