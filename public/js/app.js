@@ -202,6 +202,27 @@ class OptimizedAssessmentApp {
         this.downloadCsvBtn.addEventListener('click', () => this.downloadCsv());
         this.refreshTokenBtn.addEventListener('click', () => this.refreshToken());
         this.subtypeFilter.addEventListener('change', () => this.filterData());
+        
+        // 手动Token事件
+        const manualTokenBtn = document.getElementById('manualTokenBtn');
+        const tokenModal = document.getElementById('tokenModal');
+        const cancelTokenBtn = document.getElementById('cancelTokenBtn');
+        const submitTokenBtn = document.getElementById('submitTokenBtn');
+        
+        if (manualTokenBtn) {
+            manualTokenBtn.addEventListener('click', () => this.showTokenModal());
+        }
+        if (cancelTokenBtn) {
+            cancelTokenBtn.addEventListener('click', () => this.hideTokenModal());
+        }
+        if (submitTokenBtn) {
+            submitTokenBtn.addEventListener('click', () => this.submitManualToken());
+        }
+        if (tokenModal) {
+            tokenModal.addEventListener('click', (e) => {
+                if (e.target === tokenModal) this.hideTokenModal();
+            });
+        }
         this.questionTypeFilter.addEventListener('change', () => this.filterData());
         
         // 日志面板事件
@@ -807,6 +828,59 @@ class OptimizedAssessmentApp {
 
 
     
+    showTokenModal() {
+        const tokenModal = document.getElementById('tokenModal');
+        const tokenInput = document.getElementById('tokenInput');
+        if (tokenModal && tokenInput) {
+            tokenInput.value = '';
+            tokenModal.style.display = 'flex';
+            tokenInput.focus();
+        }
+    }
+    
+    hideTokenModal() {
+        const tokenModal = document.getElementById('tokenModal');
+        if (tokenModal) {
+            tokenModal.style.display = 'none';
+        }
+    }
+    
+    async submitManualToken() {
+        const tokenInput = document.getElementById('tokenInput');
+        const submitTokenBtn = document.getElementById('submitTokenBtn');
+        
+        if (!tokenInput || !tokenInput.value.trim()) {
+            this.showStatus(this.tokenStatus, 'error', '❗ 请输入Token');
+            return;
+        }
+        
+        const token = tokenInput.value.trim();
+        submitTokenBtn.disabled = true;
+        submitTokenBtn.textContent = '更新中...';
+        
+        try {
+            const response = await fetch('/api/manual-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showStatus(this.tokenStatus, 'success', '✅ Token更新成功！');
+                this.hideTokenModal();
+            } else {
+                this.showStatus(this.tokenStatus, 'error', `❌ Token更新失败: ${result.message}`);
+            }
+        } catch (error) {
+            this.showStatus(this.tokenStatus, 'error', `❌ 网络错误: ${error.message}`);
+        } finally {
+            submitTokenBtn.disabled = false;
+            submitTokenBtn.textContent = '更新';
+        }
+    }
+
     showStatus(element, type, message) {
         element.className = `status ${type}`;
         element.textContent = message;

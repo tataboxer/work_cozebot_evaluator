@@ -35,6 +35,7 @@ app.use('/', processExcelRouter);
 app.use('/', downloadCsvRouter);
 app.use('/api', require('./routes/run-assessment'));
 app.use('/api', require('./routes/preview-data'));
+app.use('/api', require('./routes/manual-token'));
 
 // SSE日志功能 (保留)
 const sseClients = new Set();

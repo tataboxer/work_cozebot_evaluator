@@ -13,6 +13,7 @@
 - **⚡ 高效处理**: 支持批量数据并发处理
 - **📊 可视化分析**: 响应式表格、实时统计
 - **🔄 完整流程**: 3步完成评估
+- **🔑 灵活Token**: 支持自动/手动Token管理
 
 ## 🚀 核心功能
 
@@ -38,6 +39,13 @@
 - 数据表格展示
 - 实时日志面板
 - 进度条显示
+- Token管理弹窗
+
+### 🔑 4. Token 认证管理
+- 自动Token刷新（内网环境）
+- 手动Token更新（外网环境）
+- 实时环境变量更新
+- Bearer格式自动处理
 
 ## 🛠️ 技术架构
 
@@ -103,7 +111,8 @@ npm start
 ### 🎯 评估流程 (3步完成)
 
 #### 步骤1: 刷新Token (可选)
-- 如Token过期，可手动刷新
+- **自动刷新（需内网）**: 适用于内网环境，自动调用登录接口刷新Token
+- **手动更新Token**: 适用于外网环境，手动输入新Token更新
 
 #### 步骤2: 上传测试问题集
 - 上传Excel格式的测试问题集
@@ -153,24 +162,38 @@ npm start
 - **质量评估**: ~50-200 回复/分钟
 - **系统要求**: 2GB+ RAM，稳定网络连接
 
+## 🔑 Token管理功能
+
+### 自动刷新Token（内网环境）
+- 自动调用业务系统登录接口
+- 获取最新的ACCESS_TOKEN
+- 自动更新到.env文件和运行时环境
+
+### 手动更新Token（外网环境）
+- 提供弹窗界面手动输入Token
+- 支持从外部系统复制Token直接粘贴
+- 实时更新.env文件和运行时环境
+- 自动添加Bearer前缀格式化
+
 ## 🗂️ 项目结构
 
 ```
 agent-assessment/
 ├── server.js              # Express服务器
 ├── coze-bot-core.js       # Coze API核心模块
-├── get-token.js           # 令牌刷新
+├── get-token.js           # 自动令牌刷新
 ├── .env                   # 环境配置
 ├── lib/                   # 业务逻辑
 │   ├── coze-client.js     # Coze API客户端
 │   └── llm-client.js      # LLM API客户端
 ├── routes/               # Express路由
 │   ├── process-excel.js   # Excel处理路由
-│   └── run-assessment.js  # 评估执行路由
+│   ├── run-assessment.js  # 评估执行路由
+│   └── manual-token.js    # 手动Token更新路由
 └── public/               # 静态资源
-    ├── index.html         # Web界面
+    ├── index.html         # Web界面（含Token弹窗）
     ├── js/
-    │   ├── app.js          # 主前端应用
+    │   ├── app.js          # 主前端应用（含Token管理）
     │   ├── data-manager.js # 数据管理模块
     │   └── simple-list-renderer.js # 渲染模块
     └── templates/
