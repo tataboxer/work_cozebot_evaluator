@@ -3,6 +3,7 @@ class OptimizedAssessmentApp {
     constructor() {
         this.initComplete = false;
         this.currentData = null;
+        this.isAuthenticated = false;
         
         // 中文表头映射
         this.columnMapping = {
@@ -25,6 +26,9 @@ class OptimizedAssessmentApp {
             '语气合理_理由': '语气合理理由'
         };
         
+        // 检查访问权限
+        this.checkAccess();
+        
         // 快速初始化核心功能
         this.initElements();
         this.initEventListeners();
@@ -36,10 +40,19 @@ class OptimizedAssessmentApp {
     }
     
     initSSE() {
-        // 延迟初始SSE连接，完全不阻塞页面加载
+        // 延迟初始SSE连接，并且只在认证后初始化
         setTimeout(() => {
+            if (!this.isAuthenticated) {
+                console.log('未认证，跳过SSE初始化');
+                return;
+            }
+            
             try {
-                this.eventSource = new EventSource('/api/logs');
+                // SSE不能直接设置请求头，所以在URL中传递密钥
+                const accessKey = localStorage.getItem('access_key');
+                const sseUrl = `/api/logs?accessKey=${encodeURIComponent(accessKey)}`;
+                
+                this.eventSource = new EventSource(sseUrl);
                 
                 // 设置连接超时
                 const timeout = setTimeout(() => {
@@ -76,12 +89,11 @@ class OptimizedAssessmentApp {
                     if (this.eventSource) {
                         this.eventSource.close();
                     }
-                    // 不再自动重连，避免影响性能
                 };
             } catch (error) {
                 console.error('SSE初始化失败，忽略:', error);
             }
-        }, 2000); // 2秒后初始化SSE
+        }, 2000);
     }
     
     toggleLogPanel() {
@@ -191,8 +203,7 @@ class OptimizedAssessmentApp {
         this.logContent = document.getElementById('logContent');
         this.logPanelOpen = false;
         
-        // 延迟初始化SSE，避免影响页面加载
-        this.initSSE();
+        // SSE将在认证成功后初始化
     }
 
     initEventListeners() {
@@ -269,7 +280,10 @@ class OptimizedAssessmentApp {
 
             const fetchPromise = fetch('/api/refresh-token', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Access-Key': localStorage.getItem('access_key')
+                }
             });
 
             // 使用Promise.race实现超时控制
@@ -309,6 +323,9 @@ class OptimizedAssessmentApp {
 
             const response = await fetch('/process-excel', {
                 method: 'POST',
+                headers: {
+                    'X-Access-Key': localStorage.getItem('access_key')
+                },
                 body: formData
             });
 
@@ -367,7 +384,10 @@ class OptimizedAssessmentApp {
         try {
             const response = await fetch('/api/run-assessment', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Access-Key': localStorage.getItem('access_key')
+                },
                 body: JSON.stringify({ data: this.currentData })
             });
 
@@ -873,7 +893,10 @@ class OptimizedAssessmentApp {
         try {
             const response = await fetch('/api/manual-token', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Access-Key': localStorage.getItem('access_key')
+                },
                 body: JSON.stringify({ token })
             });
             
@@ -903,6 +926,103 @@ class OptimizedAssessmentApp {
                 element.style.display = 'none';
             }, 5000);
         }
+    }
+
+    // 访问权限管理
+    checkAccess() {
+        const savedKey = localStorage.getItem('access_key');
+        
+        if (savedKey) {
+            this.isAuthenticated = true;
+            this.showMainApp();
+        } else {
+            this.showAccessModal();
+        }
+    }
+
+    showAccessModal() {
+        const accessModal = document.getElementById('accessModal');
+        const accessInput = document.getElementById('accessInput');
+        
+        if (accessModal) {
+            accessModal.style.display = 'flex';
+        }
+        
+        if (accessInput) {
+            accessInput.value = '';
+            setTimeout(() => accessInput.focus(), 100);
+        }
+    }
+
+    async verifyAccess() {
+        const accessInput = document.getElementById('accessInput');
+        const submitBtn = document.getElementById('submitAccessBtn');
+        
+        if (!accessInput || !accessInput.value.trim()) {
+            this.showAccessError('请输入访问密钥');
+            return;
+        }
+        
+        const inputKey = accessInput.value.trim();
+        
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = '验证中...';
+        }
+        
+        try {
+            const response = await fetch('/api/verify-access', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: inputKey })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                localStorage.setItem('access_key', inputKey);
+                this.isAuthenticated = true;
+                this.hideAccessModal();
+                this.showMainApp();
+            } else {
+                this.showAccessError('访问密钥错误');
+            }
+        } catch (error) {
+            this.showAccessError('验证失败，请重试');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '验证';
+            }
+        }
+    }
+
+    showAccessError(message) {
+        const accessError = document.getElementById('accessError');
+        if (accessError) {
+            accessError.textContent = message;
+            accessError.style.display = 'block';
+            setTimeout(() => {
+                accessError.style.display = 'none';
+            }, 3000);
+        }
+    }
+
+    hideAccessModal() {
+        const accessModal = document.getElementById('accessModal');
+        if (accessModal) {
+            accessModal.style.display = 'none';
+        }
+    }
+
+    showMainApp() {
+        const mainContainer = document.getElementById('mainContainer');
+        if (mainContainer) {
+            mainContainer.style.display = 'block';
+        }
+        
+        // 认证成功后初始化SSE
+        this.initSSE();
     }
 }
 

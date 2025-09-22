@@ -31,8 +31,17 @@ app.use(express.static('public', {
 // 注册新架构路由
 const processExcelRouter = require('./routes/process-excel');
 const downloadCsvRouter = require('./routes/download-csv');
+
+// 先注册不需要验证的路由
 app.use('/', processExcelRouter);
 app.use('/', downloadCsvRouter);
+app.use('/api', require('./routes/verify-access'));
+
+// 访问权限验证中间件
+const verifyAccess = require('./middleware/auth');
+app.use('/api', verifyAccess);
+
+// 需要权限的API路由
 app.use('/api', require('./routes/run-assessment'));
 app.use('/api', require('./routes/preview-data'));
 app.use('/api', require('./routes/manual-token'));
