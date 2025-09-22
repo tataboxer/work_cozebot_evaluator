@@ -4,7 +4,7 @@ const path = require('path');
 require('dotenv').config();
 
 // 从环境变量读取配置，如果没有则使用默认值
-const LOGIN_HOST = process.env.LOGIN_HOST || '172.16.8.8';
+const LOGIN_HOST = process.env.LOGIN_HOST || 'dev2.sznimbus.com';
 const LOGIN_PATH = process.env.LOGIN_PATH || '/infra-auth/api/noauth/v2/login';
 
 // 登录接口URL
