@@ -43,10 +43,10 @@
 - Token管理弹窗
 
 ### 🔑 4. Token 认证管理
-- 自动Token刷新（支持内外网环境）
-- 10秒超时机制，防止无限等待
-- 实时环境变量更新
-- Bearer格式自动处理
+- 按需Token获取（处理Excel时动态获取）
+- 适配Serverless无状态环境（Railway/Vercel）
+- 支持内外网环境，使用HTTPS协议
+- 8秒超时保护，Bearer格式自动处理
 
 ### 🔐 5. 访问控制系统
 - 固定访问密钥验证
@@ -87,6 +87,18 @@ npm install
 ### 2. 配置环境变量
 创建 `.env` 文件：
 ```env
+# 登录服务器配置
+LOGIN_HOST=your_login_host
+LOGIN_PATH=your_login_path
+LOGIN_DEVICE=your_device_type
+LOGIN_USERNAME=your_encrypted_username
+LOGIN_PASSWORD=your_encrypted_password
+
+# 登录凭据配置
+LOGIN_DEVICE=UNITY
+LOGIN_USERNAME=your_encrypted_username
+LOGIN_PASSWORD=your_encrypted_password
+
 # Coze API配置
 COZE_API_TOKEN=your_coze_api_token
 COZE_BOT_ID=your_bot_id
@@ -96,9 +108,12 @@ llm_url=https://ark.cn-beijing.volces.com/api/v3/
 llm_api_key=your_volcano_api_key
 llm_model_name=doubao-1-5-pro-32k-250115
 
-# 并发配置 (Railway优化)
-DATA_PROCESSOR_THREADS=3
-ASSESS_THREADS=2
+# 访问控制配置
+ACCESS_KEY=your_access_key
+
+# 并发配置
+DATA_PROCESSOR_THREADS=15
+ASSESS_THREADS=15
 
 # 服务器端口
 PORT=3001
@@ -115,26 +130,21 @@ npm start
 
 ## 📋 使用指南
 
-### 🎯 评估流程 (3步完成)
+### 🎯 评估流程 (2步完成)
 
 #### 步骤0: 访问验证
 - **首次访问**: 输入访问密钥 ***** 进行身份验证
 - **本地缓存**: 验证成功后密钥保存在浏览器，刷新页面无需重复输入
 - **安全保护**: 防止未授权用户消耗API Token资源
 
-#### 步骤1: 刷新Token (可选)
-- **自动刷新**: 支持内外网环境，自动调用登录接口刷新Token
-- **HTTPS支持**: 已优化支持外网HTTPS连接
-- **超时处理**: 自动刷新10秒超时机制
-
-#### 步骤2: 上传测试问题集
+#### 步骤1: 上传测试问题集
 - 上传Excel格式的测试问题集
-- 系统调用Coze API生成回复
-- 实时显示处理进度
+- 系统自动获取Token并调用Coze API生成回复
+- 实时显示处理进度和Token获取状态
 - 预览生成的数据
 
-#### 步骤3: 执行质量评估  
-- 使用第2步处理结果
+#### 步骤2: 执行质量评估  
+- 使用第1步处理结果
 - 点击"开始评估"进行LLM评估
 - 实时显示评估进度和日志
 - 查看评估结果并下载CSV
@@ -181,16 +191,42 @@ npm start
 
 - **Excel处理**: ~100-500 问题/分钟
 - **质量评估**: ~50-200 回复/分钟
+- **Token获取**: <3秒响应时间
 - **系统要求**: 2GB+ RAM，稳定网络连接
+
+## 🚀 Railway部署配置
+
+### 必需环境变量
+在Railway项目的Variables页面设置：
+```bash
+LOGIN_HOST=your_login_host
+LOGIN_PATH=your_login_path
+LOGIN_DEVICE=your_device_type
+LOGIN_USERNAME=your_encrypted_username
+LOGIN_PASSWORD=your_encrypted_password
+COZE_API_TOKEN=your_coze_token
+COZE_BOT_ID=your_bot_id
+llm_url=https://ark.cn-beijing.volces.com/api/v3/
+llm_api_key=your_llm_key
+llm_model_name=doubao-1-5-pro-32k-250115
+ACCESS_KEY=your_access_key
+DATA_PROCESSOR_THREADS=5
+ASSESS_THREADS=5
+```
+
+### 部署注意事项
+- 确保所有登录凭据环境变量已正确设置
+- Railway环境下线程数建议设置为5
+- 部署后检查日志确认Token获取正常
 
 ## 🔑 Token管理功能
 
-### 自动刷新Token
-- 自动调用业务系统登录接口
-- 获取最新的ACCESS_TOKEN
-- 自动更新到.env文件和运行时环境
+### 按需Token获取
+- 处理Excel时动态获取Token
+- 适配Serverless无状态环境（Railway/Vercel）
 - 支持内外网环境，使用HTTPS协议
-- 10秒超时保护机制
+- 8秒超时保护机制
+- 自动错误处理和重试
 
 ## 🗂️ 项目结构
 
@@ -201,6 +237,7 @@ agent-assessment/
 ├── get-token.js           # 自动令牌刷新
 ├── .env                   # 环境配置
 ├── lib/                   # 业务逻辑
+│   ├── token-manager.js   # 动态Token管理
 │   ├── coze-client.js     # Coze API客户端
 │   └── llm-client.js      # LLM API客户端
 ├── routes/               # Express路由
