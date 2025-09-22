@@ -6,29 +6,33 @@ if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
 
-// 环境变量检查
-console.log('=== 环境变量检查 ===');
-console.log('NODE_ENV:', process.env.NODE_ENV || 'development');
+// 环境变量检查（用于调试Railway等云平台问题）
+const projectEnvs = {
+  NODE_ENV: process.env.NODE_ENV,
+  PORT: process.env.PORT,
+  ACCESS_KEY: process.env.ACCESS_KEY,
+  LOGIN_HOST: process.env.LOGIN_HOST,
+  LOGIN_PORT: process.env.LOGIN_PORT,
+  LOGIN_PATH: process.env.LOGIN_PATH,
+  LOGIN_DEVICE: process.env.LOGIN_DEVICE,
+  LOGIN_USERNAME: process.env.LOGIN_USERNAME ? '✅ 已设置' : undefined,
+  LOGIN_PASSWORD: process.env.LOGIN_PASSWORD ? '✅ 已设置' : undefined,
+  ACCESS_TOKEN: process.env.ACCESS_TOKEN ? '✅ 已设置' : undefined,
+  REFRESH_TOKEN: process.env.REFRESH_TOKEN ? '✅ 已设置' : undefined,
+  llm_url: process.env.llm_url,
+  llm_api_key: process.env.llm_api_key ? '✅ 已设置' : undefined,
+  llm_model_name: process.env.llm_model_name,
+  COZE_API_TOKEN: process.env.COZE_API_TOKEN ? '✅ 已设置' : undefined,
+  COZE_BOT_ID: process.env.COZE_BOT_ID,
+  DEFAULT_CONTENT: process.env.DEFAULT_CONTENT,
+  DATA_PROCESSOR_THREADS: process.env.DATA_PROCESSOR_THREADS,
+  ASSESS_THREADS: process.env.ASSESS_THREADS
+};
+console.log('=== 项目环境变量 ===');
+console.log(projectEnvs);
+console.log('====================');
 
-// 显示所有环境变量名称（不显示值）
-const envKeys = Object.keys(process.env).filter(key => 
-  key.includes('ACCESS') || 
-  key.includes('COZE') || 
-  key.includes('llm') ||
-  key.includes('TOKEN')
-);
-console.log('相关环境变量名称:', envKeys);
 
-// Railway临时修复：如果环境变量未设置，使用默认值
-if (!process.env.ACCESS_KEY && process.env.NODE_ENV === 'production') {
-  process.env.ACCESS_KEY = 'sgxsk';
-  console.log('⚠️ Railway临时修复: 使用默认ACCESS_KEY');
-}
-
-console.log('ACCESS_KEY:', process.env.ACCESS_KEY ? `✅ 已设置 (${process.env.ACCESS_KEY})` : '❌ 未设置');
-console.log('COZE_API_TOKEN:', process.env.COZE_API_TOKEN ? '✅ 已设置' : '❌ 未设置');
-console.log('llm_api_key:', process.env.llm_api_key ? '✅ 已设置' : '❌ 未设置');
-console.log('========================');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -63,23 +67,11 @@ const downloadCsvRouter = require('./routes/download-csv');
 app.use('/', processExcelRouter);
 app.use('/', downloadCsvRouter);
 
-// 注册验证路由
-try {
-  const verifyAccessRouter = require('./routes/verify-access');
-  app.use('/api', verifyAccessRouter);
-  console.log('✅ verify-access 路由注册成功');
-} catch (error) {
-  console.error('❌ verify-access 路由注册失败:', error.message);
-}
+app.use('/api', require('./routes/verify-access'));
 
 // 访问权限验证中间件
-try {
-  const verifyAccess = require('./middleware/auth');
-  app.use('/api', verifyAccess);
-  console.log('✅ 访问权限中间件注册成功');
-} catch (error) {
-  console.error('❌ 访问权限中间件注册失败:', error.message);
-}
+const verifyAccess = require('./middleware/auth');
+app.use('/api', verifyAccess);
 
 // 需要权限的API路由
 app.use('/api', require('./routes/run-assessment'));

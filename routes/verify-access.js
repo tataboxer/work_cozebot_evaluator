@@ -9,12 +9,7 @@ router.post('/verify-access', (req, res) => {
     const { key } = req.body;
     const correctKey = process.env.ACCESS_KEY;
     
-    // Railway调试信息
-    console.log('Railway 访问密钥验证:');
-    console.log('输入密钥:', key);
-    console.log('环境变量 ACCESS_KEY:', correctKey);
-    console.log('密钥匹配:', key === correctKey);
-    console.log('所有环境变量:', Object.keys(process.env).filter(k => k.includes('ACCESS')));
+
     
     if (!key) {
       return res.status(400).json({
@@ -31,7 +26,7 @@ router.post('/verify-access', (req, res) => {
     } else {
       return res.status(401).json({
         success: false,
-        message: `访问密钥错误 - 输入: ${key}, 期望: ${correctKey}`
+        message: '访问密钥错误'
       });
     }
     
