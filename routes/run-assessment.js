@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { evaluateWithLLM } = require('../lib/llm-client');
+const { saveAssessmentResults } = require('../lib/assessment-storage');
 
 /**
  * 处理单行数据的函数 - 对应assess.py的process_single_row
@@ -172,6 +173,29 @@ router.post('/run-assessment', async (req, res) => {
     await Promise.all(allPromises);
     
     console.log(`🎉 前端数据评估完成！成功评估: ${successCount}/${evaluatedCount}`);
+    
+    // 存储评估结果到数据库
+    if (successCount > 0) {
+      try {
+        const metadata = {
+          model: process.env.llm_model_name,
+          ip: req.ip,
+          timestamp: new Date().toISOString()
+        };
+        
+        const { batchId, count } = await saveAssessmentResults(data, metadata);
+        console.log(`✅ 已存储 ${count} 条评估结果，批次ID: ${batchId}`);
+        
+        if (global.broadcastLog) {
+          global.broadcastLog('success', `✅ 已存储 ${count} 条评估结果到数据库`);
+        }
+      } catch (error) {
+        console.error('❌ 数据存储失败:', error);
+        if (global.broadcastLog) {
+          global.broadcastLog('error', `❌ 数据存储失败: ${error.message}`);
+        }
+      }
+    }
     
     return res.json({
       success: true,
