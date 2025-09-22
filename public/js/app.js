@@ -262,19 +262,31 @@ class OptimizedAssessmentApp {
         this.refreshTokenBtn.disabled = true;
 
         try {
-            const response = await fetch('/api/refresh-token', {
+            // 创建10秒超时的Promise
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('请求超时(10秒)')), 10000);
+            });
+
+            const fetchPromise = fetch('/api/refresh-token', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
 
+            // 使用Promise.race实现超时控制
+            const response = await Promise.race([fetchPromise, timeoutPromise]);
             const result = await response.json();
+            
             if (result.success) {
                 this.showStatus(this.tokenStatus, 'success', '✅ Token刷新成功！');
             } else {
                 this.showStatus(this.tokenStatus, 'error', `❌ Token刷新失败: ${result.message}`);
             }
         } catch (error) {
-            this.showStatus(this.tokenStatus, 'error', `❌ 网络错误: ${error.message}`);
+            if (error.message.includes('超时')) {
+                this.showStatus(this.tokenStatus, 'error', '❌ Token刷新超时，请检查内网连接或使用手动更新');
+            } else {
+                this.showStatus(this.tokenStatus, 'error', `❌ 网络错误: ${error.message}`);
+            }
         } finally {
             this.refreshTokenBtn.disabled = false;
         }

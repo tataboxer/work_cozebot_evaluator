@@ -87,6 +87,20 @@ app.post('/api/refresh-token', async (req, res) => {
 
     let stdout = '';
     let stderr = '';
+    let isCompleted = false;
+
+    // 设置10秒超时
+    const timeout = setTimeout(() => {
+      if (!isCompleted) {
+        console.log('Token刷新超时，终止进程');
+        child.kill('SIGTERM');
+        res.status(408).json({
+          success: false,
+          message: 'Token刷新超时(10秒)，可能是内网连接问题，请使用手动更新Token'
+        });
+        isCompleted = true;
+      }
+    }, 10000);
 
     child.stdout.on('data', (data) => {
       stdout += data.toString();
@@ -99,6 +113,10 @@ app.post('/api/refresh-token', async (req, res) => {
     });
 
     child.on('close', (code) => {
+      clearTimeout(timeout);
+      if (isCompleted) return; // 已经超时处理过了
+      isCompleted = true;
+      
       if (code === 0) {
         res.json({
           success: true,
@@ -112,6 +130,19 @@ app.post('/api/refresh-token', async (req, res) => {
           error: stderr
         });
       }
+    });
+
+    child.on('error', (error) => {
+      clearTimeout(timeout);
+      if (isCompleted) return;
+      isCompleted = true;
+      
+      console.error('Token刷新进程错误:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Token刷新进程启动失败',
+        error: error.message
+      });
     });
 
   } catch (error) {

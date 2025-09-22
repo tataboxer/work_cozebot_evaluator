@@ -93,24 +93,34 @@ const req = http.request(options, (res) => {
             console.log('💾 Token已更新到 .env 文件（保持其他配置不变）');
           } catch (error) {
             console.error('❌ 更新.env文件失败:', error.message);
+            process.exit(1);
           }
         }
       } else {
         console.log('\n❌ 登录测试失败:');
         console.log('状态码:', res.statusCode);
         console.log('错误信息:', jsonResponse.message || '未知错误');
+        process.exit(1);
       }
     } catch (error) {
       console.log('\n❌ JSON解析失败:', error.message);
       console.log('原始数据:', data);
+      process.exit(1);
     }
   });
+});
+
+// 设置8秒超时
+req.setTimeout(8000, () => {
+  console.error('❌ 请求超时(8秒)，可能是内网连接问题');
+  req.destroy();
+  process.exit(1);
 });
 
 // 处理请求错误
 req.on('error', (error) => {
   console.error('❌ 请求失败:', error.message);
-  console.error('错误详情:', error);
+  process.exit(1);
 });
 
 // 发送请求数据
