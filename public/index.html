@@ -620,79 +620,7 @@
             margin-top: 60px;
         }
 
-        /* 手动Token弹窗样式 */
-        .token-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
 
-        .token-modal-content {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .token-modal h3 {
-            margin: 0 0 20px 0;
-            color: #2c3e50;
-            text-align: center;
-        }
-
-        .token-input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            margin-bottom: 20px;
-            font-family: 'Courier New', monospace;
-        }
-
-        .token-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .token-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
-        .token-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-
-        .token-btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .token-btn-secondary {
-            background: #f8f9fa;
-            color: #6c757d;
-            border: 1px solid #dee2e6;
-        }
-
-        .token-btn:hover {
-            transform: translateY(-1px);
-        }
 
         /* 访问密钥验证样式 */
         .access-modal {
@@ -840,21 +768,9 @@
 
         <div class="main-content">
             <div class="workflow">
-                <!-- 步骤1: 刷新Token -->
+                <!-- 步骤1: 上传Excel -->
                 <div class="step-card">
                     <div class="step-number">1</div>
-                    <h3>刷新认证Token</h3>
-                    <p>业务系统免验证码Token如过期，可手动刷新</p>
-                    <div style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
-                        <button id="refreshTokenBtn" class="btn">自动刷新（需内网）</button>
-                        <button id="manualTokenBtn" class="btn">手动更新Token</button>
-                    </div>
-                    <div id="tokenStatus" class="status"></div>
-                </div>
-
-                <!-- 步骤2: 上传Excel -->
-                <div class="step-card">
-                    <div class="step-number">2</div>
                     <h3>上传测试问题集</h3>
                     <p>上传测试集（<a href="templates/test_set_example.xls" download>下载样例</a>），自动调用Coze Agent生成回复</p>
                     <div class="file-input">
@@ -872,12 +788,12 @@
                     </div>
                 </div>
 
-                <!-- 步骤3: 执行评估 -->
+                <!-- 步骤2: 执行评估 -->
                 <div class="step-card">
-                    <div class="step-number">3</div>
+                    <div class="step-number">2</div>
                     <h3>执行质量评估</h3>
                     <p>使用LLM对助手回复进行专业评估，生成详细的质量报告</p>
-                    <div id="assessmentFileName" style="margin: 10px 0 25px 0; color: #666;">请先完成第2步Excel处理</div>
+                    <div id="assessmentFileName" style="margin: 10px 0 25px 0; color: #666;">请先完成第1步Excel处理</div>
                     <button id="runAssessmentBtn" class="btn" disabled>开始评估</button>
                     <div id="assessmentStatus" class="status"></div>
                     <div class="progress-container">
@@ -940,21 +856,11 @@
         <div class="log-content" id="logContent"></div>
     </div>
 
-    <!-- 手动Token弹窗 -->
-    <div class="token-modal" id="tokenModal">
-        <div class="token-modal-content">
-            <h3>手动更新Token</h3>
-            <textarea class="token-input" id="tokenInput" placeholder="请输入新的ACCESS_TOKEN（不需要Bearer前缀）" rows="4"></textarea>
-            <div class="token-buttons">
-                <button class="token-btn token-btn-secondary" id="cancelTokenBtn">取消</button>
-                <button class="token-btn token-btn-primary" id="submitTokenBtn">更新</button>
-            </div>
-        </div>
-    </div>
+
 
     <!-- 主应用架构 -->
-    <script src="js/simple-list-renderer.js"></script>
-    <script src="js/data-manager.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/simple-list-renderer.js?v=3.0"></script>
+    <script src="js/data-manager.js?v=3.0"></script>
+    <script src="js/app.js?v=3.0"></script>
 </body>
 </html>

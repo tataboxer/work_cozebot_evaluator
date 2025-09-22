@@ -169,14 +169,12 @@ class OptimizedAssessmentApp {
         this.processExcelBtn = document.getElementById('processExcelBtn');
         this.runAssessmentBtn = document.getElementById('runAssessmentBtn');
         this.downloadCsvBtn = document.getElementById('downloadCsvBtn');
-        this.refreshTokenBtn = document.getElementById('refreshTokenBtn');
         
         // 文件输入
         this.excelFileInput = document.getElementById('excelFile');
         this.fileName = document.getElementById('fileName');
         
         // 状态显示
-        this.tokenStatus = document.getElementById('tokenStatus');
         this.excelStatus = document.getElementById('excelStatus');
         this.assessmentStatus = document.getElementById('assessmentStatus');
         
@@ -207,34 +205,30 @@ class OptimizedAssessmentApp {
     }
 
     initEventListeners() {
-        this.excelFileInput.addEventListener('change', (e) => this.handleFileSelect(e));
-        this.processExcelBtn.addEventListener('click', () => this.processExcel());
-        this.runAssessmentBtn.addEventListener('click', () => this.runAssessment());
-        this.downloadCsvBtn.addEventListener('click', () => this.downloadCsv());
-        this.refreshTokenBtn.addEventListener('click', () => this.refreshToken());
-        this.subtypeFilter.addEventListener('change', () => this.filterData());
-        
-        // 手动Token事件
-        const manualTokenBtn = document.getElementById('manualTokenBtn');
-        const tokenModal = document.getElementById('tokenModal');
-        const cancelTokenBtn = document.getElementById('cancelTokenBtn');
-        const submitTokenBtn = document.getElementById('submitTokenBtn');
-        
-        if (manualTokenBtn) {
-            manualTokenBtn.addEventListener('click', () => this.showTokenModal());
+        if (this.excelFileInput) {
+            this.excelFileInput.addEventListener('change', (e) => this.handleFileSelect(e));
         }
-        if (cancelTokenBtn) {
-            cancelTokenBtn.addEventListener('click', () => this.hideTokenModal());
+        if (this.processExcelBtn) {
+            this.processExcelBtn.addEventListener('click', () => this.processExcel());
         }
-        if (submitTokenBtn) {
-            submitTokenBtn.addEventListener('click', () => this.submitManualToken());
+        if (this.runAssessmentBtn) {
+            this.runAssessmentBtn.addEventListener('click', () => this.runAssessment());
         }
-        if (tokenModal) {
-            tokenModal.addEventListener('click', (e) => {
-                if (e.target === tokenModal) this.hideTokenModal();
-            });
+        if (this.downloadCsvBtn) {
+            this.downloadCsvBtn.addEventListener('click', () => this.downloadCsv());
         }
-        this.questionTypeFilter.addEventListener('change', () => this.filterData());
+        if (this.subtypeFilter) {
+            this.subtypeFilter.addEventListener('change', () => this.filterData());
+        }
+        if (this.questionTypeFilter) {
+            this.questionTypeFilter.addEventListener('change', () => this.filterData());
+        }
+    }
+    
+    initLogPanelEvents() {
+        // 重新获取日志面板元素
+        this.logPanel = document.getElementById('logPanel');
+        this.logContent = document.getElementById('logContent');
         
         // 日志面板事件
         const logToggle = document.getElementById('logToggle');
@@ -268,43 +262,7 @@ class OptimizedAssessmentApp {
         }
     }
 
-    async refreshToken() {
-        this.showStatus(this.tokenStatus, 'info', '正在刷新Token...');
-        this.refreshTokenBtn.disabled = true;
 
-        try {
-            // 创建10秒超时的Promise
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('请求超时(10秒)')), 10000);
-            });
-
-            const fetchPromise = fetch('/api/refresh-token', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'X-Access-Key': localStorage.getItem('access_key')
-                }
-            });
-
-            // 使用Promise.race实现超时控制
-            const response = await Promise.race([fetchPromise, timeoutPromise]);
-            const result = await response.json();
-            
-            if (result.success) {
-                this.showStatus(this.tokenStatus, 'success', '✅ Token刷新成功！');
-            } else {
-                this.showStatus(this.tokenStatus, 'error', `❌ Token刷新失败: ${result.message}`);
-            }
-        } catch (error) {
-            if (error.message.includes('超时')) {
-                this.showStatus(this.tokenStatus, 'error', '❌ Token刷新超时，请检查内网连接或使用手动更新');
-            } else {
-                this.showStatus(this.tokenStatus, 'error', `❌ 网络错误: ${error.message}`);
-            }
-        } finally {
-            this.refreshTokenBtn.disabled = false;
-        }
-    }
 
     async processExcel() {
         const file = this.excelFileInput.files[0];
@@ -859,62 +817,7 @@ class OptimizedAssessmentApp {
     
 
 
-    
-    showTokenModal() {
-        const tokenModal = document.getElementById('tokenModal');
-        const tokenInput = document.getElementById('tokenInput');
-        if (tokenModal && tokenInput) {
-            tokenInput.value = '';
-            tokenModal.style.display = 'flex';
-            tokenInput.focus();
-        }
-    }
-    
-    hideTokenModal() {
-        const tokenModal = document.getElementById('tokenModal');
-        if (tokenModal) {
-            tokenModal.style.display = 'none';
-        }
-    }
-    
-    async submitManualToken() {
-        const tokenInput = document.getElementById('tokenInput');
-        const submitTokenBtn = document.getElementById('submitTokenBtn');
-        
-        if (!tokenInput || !tokenInput.value.trim()) {
-            this.showStatus(this.tokenStatus, 'error', '❗ 请输入Token');
-            return;
-        }
-        
-        const token = tokenInput.value.trim();
-        submitTokenBtn.disabled = true;
-        submitTokenBtn.textContent = '更新中...';
-        
-        try {
-            const response = await fetch('/api/manual-token', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'X-Access-Key': localStorage.getItem('access_key')
-                },
-                body: JSON.stringify({ token })
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                this.showStatus(this.tokenStatus, 'success', '✅ Token更新成功！');
-                this.hideTokenModal();
-            } else {
-                this.showStatus(this.tokenStatus, 'error', `❌ Token更新失败: ${result.message}`);
-            }
-        } catch (error) {
-            this.showStatus(this.tokenStatus, 'error', `❌ 网络错误: ${error.message}`);
-        } finally {
-            submitTokenBtn.disabled = false;
-            submitTokenBtn.textContent = '更新';
-        }
-    }
+
 
     showStatus(element, type, message) {
         element.className = `status ${type}`;
@@ -1023,7 +926,11 @@ class OptimizedAssessmentApp {
         
         // 认证成功后初始化SSE
         this.initSSE();
+        
+        // 初始化日志面板事件
+        this.initLogPanelEvents();
     }
+
 }
 
 // 初始化应用

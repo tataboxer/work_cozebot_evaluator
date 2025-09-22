@@ -43,8 +43,7 @@
 - Token管理弹窗
 
 ### 🔑 4. Token 认证管理
-- 自动Token刷新（内网环境）
-- 手动Token更新（外网环境）
+- 自动Token刷新（支持内外网环境）
 - 10秒超时机制，防止无限等待
 - 实时环境变量更新
 - Bearer格式自动处理
@@ -116,7 +115,7 @@ npm start
 
 ## 📋 使用指南
 
-### 🎯 评估流程 (4步完成)
+### 🎯 评估流程 (3步完成)
 
 #### 步骤0: 访问验证
 - **首次访问**: 输入访问密钥 ***** 进行身份验证
@@ -124,9 +123,9 @@ npm start
 - **安全保护**: 防止未授权用户消耗API Token资源
 
 #### 步骤1: 刷新Token (可选)
-- **自动刷新（需内网）**: 适用于内网环境，自动调用登录接口刷新Token
-- **手动更新Token**: 适用于外网环境，手动输入新Token更新
-- **超时处理**: 自动刷新10秒超时，外网环境建议使用手动更新
+- **自动刷新**: 支持内外网环境，自动调用登录接口刷新Token
+- **HTTPS支持**: 已优化支持外网HTTPS连接
+- **超时处理**: 自动刷新10秒超时机制
 
 #### 步骤2: 上传测试问题集
 - 上传Excel格式的测试问题集
@@ -186,16 +185,12 @@ npm start
 
 ## 🔑 Token管理功能
 
-### 自动刷新Token（内网环境）
+### 自动刷新Token
 - 自动调用业务系统登录接口
 - 获取最新的ACCESS_TOKEN
 - 自动更新到.env文件和运行时环境
-
-### 手动更新Token（外网环境）
-- 提供弹窗界面手动输入Token
-- 支持从外部系统复制Token直接粘贴
-- 实时更新.env文件和运行时环境
-- 自动添加Bearer前缀格式化
+- 支持内外网环境，使用HTTPS协议
+- 10秒超时保护机制
 
 ## 🗂️ 项目结构
 
@@ -210,12 +205,11 @@ agent-assessment/
 │   └── llm-client.js      # LLM API客户端
 ├── routes/               # Express路由
 │   ├── process-excel.js   # Excel处理路由
-│   ├── run-assessment.js  # 评估执行路由
-│   └── manual-token.js    # 手动Token更新路由
+│   └── run-assessment.js  # 评估执行路由
 └── public/               # 静态资源
-    ├── index.html         # Web界面（含Token弹窗）
+    ├── index.html         # Web界面
     ├── js/
-    │   ├── app.js          # 主前端应用（含Token管理）
+    │   ├── app.js          # 主前端应用
     │   ├── data-manager.js # 数据管理模块
     │   └── simple-list-renderer.js # 渲染模块
     └── templates/

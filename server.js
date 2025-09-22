@@ -12,13 +12,11 @@ const projectEnvs = {
   PORT: process.env.PORT,
   ACCESS_KEY: process.env.ACCESS_KEY,
   LOGIN_HOST: process.env.LOGIN_HOST,
-  LOGIN_PORT: process.env.LOGIN_PORT,
   LOGIN_PATH: process.env.LOGIN_PATH,
   LOGIN_DEVICE: process.env.LOGIN_DEVICE,
   LOGIN_USERNAME: process.env.LOGIN_USERNAME ? '✅ 已设置' : undefined,
   LOGIN_PASSWORD: process.env.LOGIN_PASSWORD ? '✅ 已设置' : undefined,
-  ACCESS_TOKEN: process.env.ACCESS_TOKEN ? '✅ 已设置' : undefined,
-  REFRESH_TOKEN: process.env.REFRESH_TOKEN ? '✅ 已设置' : undefined,
+
   llm_url: process.env.llm_url,
   llm_api_key: process.env.llm_api_key ? '✅ 已设置' : undefined,
   llm_model_name: process.env.llm_model_name,
@@ -76,7 +74,7 @@ app.use('/api', verifyAccess);
 // 需要权限的API路由
 app.use('/api', require('./routes/run-assessment'));
 app.use('/api', require('./routes/preview-data'));
-app.use('/api', require('./routes/manual-token'));
+
 
 // SSE日志功能 (保留)
 const sseClients = new Set();
@@ -117,84 +115,7 @@ global.broadcastLog = broadcastLog;
 
 // 保留的API路由
 
-// 1. 刷新Token (保留现有功能)
-app.post('/api/refresh-token', async (req, res) => {
-  try {
-    console.log('开始刷新Token...');
 
-    const child = spawn('node', ['get-token.js'], {
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
-
-    let stdout = '';
-    let stderr = '';
-    let isCompleted = false;
-
-    // 设置10秒超时
-    const timeout = setTimeout(() => {
-      if (!isCompleted) {
-        console.log('Token刷新超时，终止进程');
-        child.kill('SIGTERM');
-        res.status(408).json({
-          success: false,
-          message: 'Token刷新超时(10秒)，可能是内网连接问题，请使用手动更新Token'
-        });
-        isCompleted = true;
-      }
-    }, 10000);
-
-    child.stdout.on('data', (data) => {
-      stdout += data.toString();
-      console.log('Token刷新输出:', data.toString());
-    });
-
-    child.stderr.on('data', (data) => {
-      stderr += data.toString();
-      console.error('Token刷新错误:', data.toString());
-    });
-
-    child.on('close', (code) => {
-      clearTimeout(timeout);
-      if (isCompleted) return; // 已经超时处理过了
-      isCompleted = true;
-      
-      if (code === 0) {
-        res.json({
-          success: true,
-          message: 'Token刷新成功',
-          output: stdout
-        });
-      } else {
-        res.status(500).json({
-          success: false,
-          message: 'Token刷新失败',
-          error: stderr
-        });
-      }
-    });
-
-    child.on('error', (error) => {
-      clearTimeout(timeout);
-      if (isCompleted) return;
-      isCompleted = true;
-      
-      console.error('Token刷新进程错误:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Token刷新进程启动失败',
-        error: error.message
-      });
-    });
-
-  } catch (error) {
-    console.error('Token刷新异常:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Token刷新异常',
-      error: error.message
-    });
-  }
-});
 
 // 启动服务器
 app.listen(PORT, '0.0.0.0', () => {
