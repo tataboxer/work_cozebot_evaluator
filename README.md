@@ -12,64 +12,29 @@
 - **📋 参考答案**: 支持标准答案对比评估
 - **⚡ 高效处理**: 支持批量数据并发处理
 - **📊 可视化分析**: 响应式表格、实时统计
-- **🔄 完整流程**: 4步完成评估
+- **🔄 完整流程**: 2步完成评估
 - **🔑 灵活Token**: 支持自动/手动Token管理
 - **🔒 访问控制**: 密钥验证 + 本地缓存，防止未授权使用
+- **💾 数据管理**: 会话记录存储与查询
+- **📈 性能监控**: Token获取时长统计
 
 ## 🚀 核心功能
 
-### 📋 1. Excel数据处理
-- Excel批量数据处理
-- Coze API 自动化调用
-- 上下文感知的对话生成
-- 可配置并发线程数
-- 实时进度追踪
-
-### 🧠 2. AI 质量评估
-- 支持火山引擎豆包等LLM平台
-- 三维度评估体系：
-  - 准确率 (1-100分)
-  - 专业度 (1-100分) 
-  - 语气合理性 (1-100分)
-- 智能参考答案对比
-- 并发处理与重试机制
-
-### 🌐 3. Web 管理界面
-- 响应式设计
-- 拖拽上传文件
-- 数据表格展示
-- 实时日志面板
-- 进度条显示
-- Token管理弹窗
-
-### 🔑 4. Token 认证管理
-- 按需Token获取（处理Excel时动态获取）
-- 适配Serverless无状态环境（Railway/Vercel）
-- 支持内外网环境，使用HTTPS协议
-- 8秒超时保护，Bearer格式自动处理
-
-### 🔐 5. 访问控制系统
-- 固定访问密钥验证
-- 前端用户体验 + 后端 API 安全
-- localStorage 本地缓存，刷新无需重复输入
-- 实时日志和进度显示
+- **📋 Excel数据处理**: 批量上传测试问题集，自动调用Coze API生成回复
+- **🧠 AI质量评估**: 三维度评估体系（准确率、专业度、语气合理性），支持参考答案对比
+- **🌐 Web管理界面**: 响应式设计，拖拽上传，实时进度追踪
+- **💾 Supabase数据管理**: 云端存储，会话记录，历史查询，CSV导出
+- **🔐 访问控制**: 密钥验证，本地缓存，API安全保护
+- **📊 性能监控**: Token时长统计，处理效率分析
 
 ## 🛠️ 技术架构
 
-### 前端技术栈
-- **ES6+ 模块化** - 三模块分离设计
-- **CSS3 + Flexbox** - 响应式布局
-- **File API + Drag & Drop** - 文件处理
+- **前端**: ES6+模块化，响应式设计，拖拽上传
+- **后端**: Node.js + Express，Supabase云数据库
+- **数据处理**: Excel解析，并发API调用，LLM评估
+- **安全**: 访问密钥验证，无文件存储，环境变量保护
 
-### 后端技术栈
-- **Node.js + Express** - Web服务器
-- **Multer (内存存储)** - Excel文件内存处理，无磁盘存储
-- **dotenv** - 环境变量管理
-
-### 数据处理
-- **xlsx** - Excel文件处理
-- **axios** - HTTP客户端
-- **Promise.all** - 异步并发执行
+> 详细架构说明请参考 [ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 ## 📦 快速开始
 
@@ -108,6 +73,10 @@ llm_url=https://ark.cn-beijing.volces.com/api/v3/
 llm_api_key=your_volcano_api_key
 llm_model_name=doubao-1-5-pro-32k-250115
 
+# Supabase数据库配置
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_KEY=your_supabase_service_key
+
 # 访问控制配置
 ACCESS_KEY=your_access_key
 
@@ -133,12 +102,12 @@ npm start
 ### 🎯 评估流程 (2步完成)
 
 #### 步骤0: 访问验证
-- **首次访问**: 输入访问密钥 ***** 进行身份验证
+- **首次访问**: 输入访问密钥进行身份验证
 - **本地缓存**: 验证成功后密钥保存在浏览器，刷新页面无需重复输入
 - **安全保护**: 防止未授权用户消耗API Token资源
 
 #### 步骤1: 上传测试问题集
-- 上传Excel格式的测试问题集
+- 上传Excel格式的测试问题集（支持拖拽上传）
 - 系统自动获取Token并调用Coze API生成回复
 - 实时显示处理进度和Token获取状态
 - 预览生成的数据
@@ -148,109 +117,61 @@ npm start
 - 点击"开始评估"进行LLM评估
 - 实时显示评估进度和日志
 - 查看评估结果并下载CSV
+- 自动保存会话记录到数据库
 
-## 📊 数据格式说明
+### 📋 记录管理
 
-### 输入数据格式 (Excel)
-| 列名 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `question_id` | 字符串 | 否 | 问题唯一标识 |
-| `question_type` | 字符串 | 否 | 问题分类 |
-| `question_text` | 字符串 | 是 | 用户问题内容 |
-| `context` | JSON字符串 | 否 | 对话历史上下文 |
-| `expected_answer` | 字符串 | 否 | 参考答案/标准答案 |
+#### 历史查询
+- **时间筛选**: 按创建时间范围查询
+- **名称搜索**: 按会话名称模糊搜索
+- **配置显示**: 显示IP地址和模型名称
+- **统计信息**: 显示准确率、专业度、语气评分
+- **性能数据**: Token获取时长统计
 
-### 输出数据格式 (CSV)
+#### 详情查看
+- **弹窗展示**: 完整评估结果表格
+- **数据筛选**: 按问题类型和回复类型筛选
+- **列宽调整**: 支持表格列宽拖拽调整
+- **数据导出**: 单个会话CSV导出
+- **会话删除**: 支持删除历史记录
 
-包含原始字段 + AI生成字段 + 评估字段：
+## 📊 数据格式
 
-**核心数据列：**
-- `question_text` - 用户问题
-- `context` - 对话上下文
-- `block_result` - AI回复内容
-- `expected_answer` - 参考答案
-- `准确率` / `准确率_理由` - 准确性评估
-- `专业度` / `专业度_理由` - 专业度评估
-- `语气合理度` / `语气合理_理由` - 语气评估
+**输入**: Excel文件，必需字段 `question_text`，可选 `context`、`expected_answer`  
+**输出**: CSV文件，包含AI回复和三维度评估结果
 
-## 🔒 安全性
+> 详细格式说明请参考 [API.md](docs/API.md)
 
-### 访问控制
-- **双重验证**: 前端用户体验 + 后端 API 安全验证
-- **本地缓存**: 验证成功后密钥保存在 localStorage，刷新无需重复输入
-- **API 保护**: 所有 API 接口都需要有效访问密钥，防止未授权调用
-- **超时机制**: Token 刷新请求 10 秒超时，防止无限等待
+## 🔒 安全与性能
 
-### 数据安全
-- 环境变量保护敏感信息
-- 文件类型验证
-- 输入验证和清理
-- **无文件存储**: 所有数据处理均在内存中完成
+- **安全**: 访问密钥验证，无文件存储，环境变量保护
+- **性能**: Excel处理 ~100-500问题/分钟，评估 ~50-200回复/分钟
+- **要求**: Node.js 18+，2GB+ RAM，稳定网络
 
-## 📈 性能指标 
+## 🚀 部署
 
-- **Excel处理**: ~100-500 问题/分钟
-- **质量评估**: ~50-200 回复/分钟
-- **Token获取**: <3秒响应时间
-- **系统要求**: 2GB+ RAM，稳定网络连接
+支持Railway、Vercel等云平台部署。
 
-## 🚀 Railway部署配置
+> 详细部署指南请参考 [DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
-### 必需环境变量
-在Railway项目的Variables页面设置：
-```bash
-LOGIN_HOST=your_login_host
-LOGIN_PATH=your_login_path
-LOGIN_DEVICE=your_device_type
-LOGIN_USERNAME=your_encrypted_username
-LOGIN_PASSWORD=your_encrypted_password
-COZE_API_TOKEN=your_coze_token
-COZE_BOT_ID=your_bot_id
-llm_url=https://ark.cn-beijing.volces.com/api/v3/
-llm_api_key=your_llm_key
-llm_model_name=doubao-1-5-pro-32k-250115
-ACCESS_KEY=your_access_key
-DATA_PROCESSOR_THREADS=5
-ASSESS_THREADS=5
-```
+## 📚 项目文档
 
-### 部署注意事项
-- 确保所有登录凭据环境变量已正确设置
-- Railway环境下线程数建议设置为5
-- 部署后检查日志确认Token获取正常
-
-## 🔑 Token管理功能
-
-### 按需Token获取
-- 处理Excel时动态获取Token
-- 适配Serverless无状态环境（Railway/Vercel）
-- 支持内外网环境，使用HTTPS协议
-- 8秒超时保护机制
-- 自动错误处理和重试
+- **[API.md](docs/API.md)** - API接口文档
+- **[DATABASE.md](docs/DATABASE.md)** - 数据库设计文档  
+- **[DEPLOYMENT.md](docs/DEPLOYMENT.md)** - 部署指南
+- **[DEVELOPMENT.md](docs/DEVELOPMENT.md)** - 开发指南
+- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - 系统架构文档
 
 ## 🗂️ 项目结构
 
 ```
 agent-assessment/
 ├── server.js              # Express服务器
-├── coze-bot-core.js       # Coze API核心模块
-├── get-token.js           # 自动令牌刷新
-├── .env                   # 环境配置
 ├── lib/                   # 业务逻辑
-│   ├── token-manager.js   # 动态Token管理
-│   ├── coze-client.js     # Coze API客户端
-│   └── llm-client.js      # LLM API客户端
-├── routes/               # Express路由
-│   ├── process-excel.js   # Excel处理路由
-│   └── run-assessment.js  # 评估执行路由
-└── public/               # 静态资源
-    ├── index.html         # Web界面
-    ├── js/
-    │   ├── app.js          # 主前端应用
-    │   ├── data-manager.js # 数据管理模块
-    │   └── simple-list-renderer.js # 渲染模块
-    └── templates/
-        └── test_set_example.xls # Excel模板
+├── routes/                # API路由
+├── middleware/            # 中间件
+├── public/                # 前端资源
+└── docs/                  # 项目文档
 ```
 
 

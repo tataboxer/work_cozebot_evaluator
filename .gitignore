@@ -45,7 +45,7 @@ log.md
 
 # Temp files
 *.tmp
-docs/
+docs/temp
 
 # OS
 .DS_Store

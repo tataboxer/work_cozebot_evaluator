@@ -58,7 +58,7 @@ async function loadSessions() {
         tbody.innerHTML = '';
         
         if (!data.sessions || data.sessions.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: #666;">暂无数据</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; color: #666;">暂无数据</td></tr>';
             return;
         }
         
@@ -75,6 +75,7 @@ async function loadSessions() {
                 <td>${session.first_token_min_duration ? session.first_token_min_duration.toFixed(1) + 's' : '-'}</td>
                 <td>${session.first_token_max_duration ? session.first_token_max_duration.toFixed(1) + 's' : '-'}</td>
                 <td>${session.avg_block_duration ? session.avg_block_duration.toFixed(1) + 's' : '-'}</td>
+                <td>${session.config?.ip || '-'} / ${session.config?.model || '-'}</td>
                 <td>
                     <button class="btn-small" onclick="viewSessionDetail('${session.session_id}')">查看</button>
                     <button class="btn-small" onclick="deleteSession('${session.session_id}')" style="background: #dc3545; margin-left: 5px;">删除</button>
