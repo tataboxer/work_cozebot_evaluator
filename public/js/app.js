@@ -43,7 +43,6 @@ class OptimizedAssessmentApp {
         // 延迟初始SSE连接，并且只在认证后初始化
         setTimeout(() => {
             if (!this.isAuthenticated) {
-                console.log('未认证，跳过SSE初始化');
                 return;
             }
             
@@ -64,7 +63,6 @@ class OptimizedAssessmentApp {
                 
                 this.eventSource.onopen = () => {
                     clearTimeout(timeout);
-                    console.log('SSE连接已建立');
                 };
                 
                 this.eventSource.onmessage = (event) => {
@@ -833,6 +831,16 @@ class OptimizedAssessmentApp {
 
     // 访问权限管理
     checkAccess() {
+        // 测试localStorage是否可用
+        try {
+            localStorage.setItem('test', 'test');
+            localStorage.removeItem('test');
+        } catch (e) {
+            console.error('localStorage不可用:', e);
+            alert('localStorage不可用，请检查浏览器设置');
+            return;
+        }
+        
         const savedKey = localStorage.getItem('access_key');
         
         if (savedKey) {

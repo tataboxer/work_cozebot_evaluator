@@ -74,6 +74,8 @@ app.use('/api', verifyAccess);
 // 需要权限的API路由
 app.use('/api', require('./routes/run-assessment'));
 app.use('/api', require('./routes/preview-data'));
+app.use('/api/sessions', require('./routes/sessions'));
+app.use('/api/sessions', require('./routes/session-details'));
 
 
 // SSE日志功能 (保留)

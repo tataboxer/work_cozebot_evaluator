@@ -4,747 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>苏州科技馆数字人助手评估工具</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            color: #2c3e50;
-        }
-
-        .container {
-            width: 100%;
-            margin: 0;
-            background: transparent;
-            min-height: 100vh;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 60px;
-            padding: 40px 60px;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            font-weight: 300;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            font-size: 1.1rem;
-            color: #7f8c8d;
-            font-weight: 300;
-        }
-
-        .main-content {
-            padding: 0 60px;
-        }
-
-        .workflow {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
-            margin-bottom: 50px;
-        }
-
-        .step-card {
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 20px;
-            padding: 40px 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            text-align: center;
-        }
-
-        .step-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        .step-number {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin: 0 auto 20px;
-        }
-
-        .step-card h3 {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: #2c3e50;
-        }
-        
-        .step-card p {
-            color: #7f8c8d;
-            line-height: 1.6;
-            margin-bottom: 25px;
-        }
-        
-        .step-card p a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        
-        .step-card p a:hover {
-            color: #764ba2;
-            text-decoration: underline;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-            width: 100%;
-            max-width: 200px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .file-input {
-            margin: 20px 0;
-        }
-
-        .file-input input[type="file"] {
-            display: none;
-        }
-
-        .file-input label {
-            background: #f0f0f0;
-            color: #333;
-            padding: 10px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            display: inline-block;
-            transition: all 0.3s ease;
-        }
-
-        .file-input label:hover {
-            background: #e0e0e0;
-        }
-
-        .status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 10px;
-            display: none;
-        }
-
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .status.info {
-            background: #cce7ff;
-            color: #004085;
-            border: 1px solid #b3d7ff;
-        }
-
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .progress-container {
-            margin-top: 20px;
-        }
-
-        .progress-text {
-            margin-bottom: 10px;
-            text-align: center;
-            color: #666;
-            display: none;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 20px;
-            background: #f0f0f0;
-            border-radius: 10px;
-            overflow: hidden;
-            display: none;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        /* 日志面板样式 */
-        .log-panel {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 450px;
-            height: 80vh;
-            max-height: 800px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-        }
-
-        .log-header {
-            padding: 15px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-radius: 10px 10px 0 0;
-            cursor: move;
-            user-select: none;
-        }
-
-        .log-header h3 {
-            color: #333;
-            margin: 0;
-            font-size: 1rem;
-        }
-
-        .close-log {
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            color: #6c757d;
-        }
-
-        .log-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            line-height: 1.4;
-        }
-
-        .log-entry {
-            margin-bottom: 5px;
-            padding: 2px 0;
-        }
-
-        .log-entry.success {
-            color: #28a745;
-            background: rgba(40, 167, 69, 0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-            border-left: 3px solid #28a745;
-        }
-
-        .log-entry.error {
-            color: #dc3545;
-            background: rgba(220, 53, 69, 0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-            border-left: 3px solid #dc3545;
-        }
-
-        .log-entry.info {
-            color: #17a2b8;
-            background: rgba(23, 162, 184, 0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-            border-left: 3px solid #17a2b8;
-        }
-
-        .log-toggle {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            cursor: pointer;
-            z-index: 999;
-            font-size: 1.2rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .log-toggle:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-        }
-
-        /* CSV显示区域样式 */
-        .csv-display-section {
-            margin-top: 40px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-        }
-
-        .csv-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .csv-title h3 {
-            font-size: 1.4rem;
-            font-weight: 600;
-            color: #2c3e50;
-            margin: 0;
-        }
-
-        .csv-filename {
-            color: #666;
-            font-size: 0.9rem;
-            font-weight: 500;
-            background: #e9ecef;
-            padding: 4px 12px;
-            border-radius: 15px;
-            display: inline-block;
-            max-width: fit-content;
-        }
-
-        .csv-filename.loaded {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .csv-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        
-        .csv-controls select {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            background: white;
-        }
-        
-        .csv-controls label {
-            color: #666;
-            font-weight: 500;
-        }
-
-        .btn-small {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 15px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-small:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .csv-content {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-
-        #csvTableContainer {
-            max-height: 70vh;
-            min-height: 500px;
-            overflow-y: auto;
-            overflow-x: auto;
-        }
-
-        #csvTable {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            font-size: 0.9rem;
-            table-layout: fixed;
-        }
-
-        #csvTable th {
-            background: #f8f9fa !important;
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 15px 20px;
-            text-align: left;
-            border-bottom: 1px solid #f8f9fa;
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 100 !important;
-            user-select: none;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            cursor: pointer;
-            position: relative;
-            border-right: 1px solid #dee2e6;
-        }
-
-        #csvTable th:last-child {
-            border-right: none;
-        }
-
-        .resize-handle {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 5px;
-            height: 100%;
-            cursor: col-resize;
-            background: transparent;
-            z-index: 101;
-        }
-
-        .resize-handle:hover {
-            background: rgba(102, 126, 234, 0.3);
-        }
-
-        .resizing {
-            cursor: col-resize;
-        }
-
-        .resizing * {
-            cursor: col-resize !important;
-        }
-
-        #csvTable th.sortable:hover {
-            background: #e9ecef;
-        }
-
-        #csvTable th.sortable::after {
-            content: '⇅';
-            float: right;
-            opacity: 0.5;
-            margin-left: 5px;
-        }
-
-        #csvTable th.sortable.sort-asc::after {
-            content: '↑';
-            opacity: 1;
-            color: #007bff;
-        }
-
-        #csvTable th.sortable.sort-desc::after {
-            content: '↓';
-            opacity: 1;
-            color: #007bff;
-        }
-
-        #csvTable td {
-            padding: 15px 20px;
-            text-align: left;
-            border-bottom: 1px solid #f8f9fa;
-            vertical-align: top;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        /* 悬浯tooltip样式 */
-        .cell-tooltip {
-            position: absolute;
-            background: #333;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            max-width: 400px;
-            word-wrap: break-word;
-            z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            display: none;
-            pointer-events: none;
-        }
-
-        #csvTable tr:hover {
-            background: #f8f9fa;
-        }
-
-        #csvTable tr:nth-child(even) {
-            background: #fafafa;
-        }
-
-        .csv-stats {
-            background: #f8f9fa;
-            padding: 15px;
-            border-top: 1px solid #dee2e6;
-            color: #666;
-            font-size: 0.9rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .stats-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .stats-label {
-            font-weight: 500;
-            color: #495057;
-        }
-
-        .stats-value {
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .stats-separator {
-            color: #dee2e6;
-            font-weight: normal;
-        }
-
-        .timing-stats {
-            background: rgba(102, 126, 234, 0.1);
-            padding: 8px 12px;
-            border-radius: 8px;
-            border-left: 3px solid #667eea;
-        }
-
-        .timing-stats .stats-value {
-            color: #667eea;
-            font-weight: 700;
-        }
-
-        .score-cell {
-            text-align: center;
-            font-weight: bold !important;
-        }
-
-        .score-1 { color: #dc3545; background: rgba(220, 53, 69, 0.1); }
-        .score-2 { color: #fd7e14; background: rgba(253, 126, 20, 0.1); }
-        .score-3 { color: #856404; background: rgba(133, 100, 4, 0.1); }
-        .score-4 { color: #6f9c2f; background: rgba(111, 156, 47, 0.1); }
-        .score-5 { color: #28a745; background: rgba(40, 167, 69, 0.1); }
-        
-        /* 时间列样式 */
-        .score-cell:not([class*="score-"]) {
-            color: #667eea;
-            font-family: 'Courier New', monospace;
-        }
-
-        .text-adaptive {
-            width: 100%;
-            word-wrap: break-word;
-            white-space: normal;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-        
-        .long-text-cell {
-            cursor: help;
-            position: relative;
-        }
-
-        .footer {
-            text-align: center;
-            padding: 40px 60px;
-            color: #7f8c8d;
-            margin-top: 60px;
-        }
-
-
-
-        /* 访问密钥验证样式 */
-        .access-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 3000;
-        }
-
-        .access-modal-content {
-            background: white;
-            border-radius: 15px;
-            padding: 40px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            text-align: center;
-        }
-
-        .access-modal h3 {
-            margin: 0 0 10px 0;
-            color: #2c3e50;
-            font-size: 1.5rem;
-        }
-
-        .access-modal p {
-            margin: 0 0 25px 0;
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .access-input {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            margin-bottom: 20px;
-            box-sizing: border-box;
-        }
-
-        .access-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .access-buttons {
-            display: flex;
-            justify-content: center;
-        }
-
-        .access-btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .access-btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .access-btn:hover {
-            transform: translateY(-1px);
-        }
-
-        .access-error {
-            color: #dc3545;
-            font-size: 0.9rem;
-            margin-top: 10px;
-            display: none;
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                padding: 30px 20px;
-            }
-
-            .main-content {
-                padding: 0 20px;
-            }
-
-            .footer {
-                padding: 30px 20px;
-            }
-
-            .workflow {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .log-panel {
-                width: 90vw;
-                height: 70vh;
-                max-height: 600px;
-                right: 5vw;
-                left: 5vw;
-                top: 15vh;
-            }
-
-            .csv-stats {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-
-            .timing-stats {
-                width: 100%;
-            }
-        }
-    </style>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <!-- 访问密钥验证弹窗 -->
@@ -762,81 +23,149 @@
 
     <div class="container" id="mainContainer" style="display: none;">
         <div class="header">
-            <h1>苏州科技馆 AI 助手评估平台</h1>
+            <h1>🏛️ 苏州科技馆 AI 助手评估平台</h1>
             <p>自动化测试和评估Coze数字人助手的回复质量</p>
+            
+            <!-- 导航栏 -->
+            <div class="navigation">
+                <button class="nav-btn active" onclick="showPage('data-processing')">数据处理</button>
+                <button class="nav-btn" onclick="showPage('records')">记录查询</button>
+                <button class="nav-btn" onclick="showPage('statistics')">统计分析</button>
+                <button class="nav-btn" onclick="showPage('evaluators')">评估器管理</button>
+            </div>
         </div>
 
         <div class="main-content">
-            <div class="workflow">
-                <!-- 步骤1: 上传Excel -->
-                <div class="step-card">
-                    <div class="step-number">1</div>
-                    <h3>上传测试问题集</h3>
-                    <p>上传测试集（<a href="templates/test_set_example.xls" download>下载样例</a>），自动调用Coze Agent生成回复</p>
-                    <div class="file-input">
-                        <input type="file" id="excelFile" accept=".xls,.xlsx">
-                        <label for="excelFile">选择Excel文件</label>
-                        <div id="fileName" style="margin-top: 10px; color: #666;"></div>
+            <!-- 数据处理页面 -->
+            <div id="dataProcessingPage" class="page-content">
+                <div class="workflow">
+                    <!-- 步骤1: 上传Excel -->
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h3>上传测试问题集</h3>
+                        <p>上传测试集（<a href="templates/test_set_example.xls" download>下载样例</a>），自动调用Coze Agent生成回复</p>
+                        <div class="file-input">
+                            <input type="file" id="excelFile" accept=".xls,.xlsx">
+                            <label for="excelFile">选择Excel文件</label>
+                            <div id="fileName" style="margin-top: 10px; color: #666;"></div>
+                        </div>
+                        <button id="processExcelBtn" class="btn" disabled>处理Excel</button>
+                        <div id="excelStatus" class="status"></div>
+                        <div class="progress-container">
+                            <div id="excelProgressText" class="progress-text"></div>
+                            <div class="progress-bar" id="excelProgressBar">
+                                <div class="progress-fill" id="excelProgressFill"></div>
+                            </div>
+                        </div>
                     </div>
-                    <button id="processExcelBtn" class="btn" disabled>处理Excel</button>
-                    <div id="excelStatus" class="status"></div>
-                    <div class="progress-container">
-                        <div id="excelProgressText" class="progress-text"></div>
-                        <div class="progress-bar" id="excelProgressBar">
-                            <div class="progress-fill" id="excelProgressFill"></div>
+
+                    <!-- 步骤2: 执行评估 -->
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h3>执行质量评估</h3>
+                        <p>使用LLM对助手回复进行专业评估，生成详细的质量报告</p>
+                        <div id="assessmentFileName" style="margin: 10px 0 25px 0; color: #666;">请先完成第1步Excel处理</div>
+                        <button id="runAssessmentBtn" class="btn" disabled>开始评估</button>
+                        <div id="assessmentStatus" class="status"></div>
+                        <div class="progress-container">
+                            <div id="progressText" class="progress-text"></div>
+                            <div class="progress-bar" id="progressBar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 步骤2: 执行评估 -->
-                <div class="step-card">
-                    <div class="step-number">2</div>
-                    <h3>执行质量评估</h3>
-                    <p>使用LLM对助手回复进行专业评估，生成详细的质量报告</p>
-                    <div id="assessmentFileName" style="margin: 10px 0 25px 0; color: #666;">请先完成第1步Excel处理</div>
-                    <button id="runAssessmentBtn" class="btn" disabled>开始评估</button>
-                    <div id="assessmentStatus" class="status"></div>
-                    <div class="progress-container">
-                        <div id="progressText" class="progress-text"></div>
-                        <div class="progress-bar" id="progressBar">
-                            <div class="progress-fill" id="progressFill"></div>
+                <!-- CSV内容显示区域 -->
+                <div id="csvDisplaySection" class="csv-display-section" style="display: none;">
+                    <div class="csv-header">
+                        <div class="csv-title">
+                            <h3>结果预览</h3>
+                            <div id="csvFileName" class="csv-filename">未选择文件</div>
                         </div>
+                        <div class="csv-controls">
+                            <label for="questionTypeFilter">问题类型:</label>
+                            <select id="questionTypeFilter">
+                                <option value="all">显示全部</option>
+                            </select>
+
+                            <label for="subtypeFilter">筛选类型:</label>
+                            <select id="subtypeFilter">
+                                <option value="all">显示全部</option>
+                                <option value="文本回复" selected>只显示文本回复</option>
+                            </select>
+
+                            <button id="downloadCsvBtn" class="btn-small" disabled>下载CSV</button>
+                        </div>
+                    </div>
+                    <div class="csv-content">
+                        <div id="csvTableContainer">
+                            <table id="csvTable">
+                                <thead id="csvTableHead"></thead>
+                                <tbody id="csvTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div id="csvStats" class="csv-stats"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- CSV内容显示区域 -->
-            <div id="csvDisplaySection" class="csv-display-section" style="display: none;">
-                <div class="csv-header">
-                    <div class="csv-title">
-                        <h3>结果预览</h3>
-                        <div id="csvFileName" class="csv-filename">未选择文件</div>
+            <!-- 记录查询页面 -->
+            <div id="recordsPage" class="page-content" style="display: none;">
+                <div class="records-container">
+                    <div class="search-filters">
+                        <input type="date" id="startDate" placeholder="开始日期">
+                        <input type="date" id="endDate" placeholder="结束日期">
+                        <input type="text" id="sessionNameFilter" placeholder="会话名称">
+                        <button class="btn-small" onclick="searchSessions()">🔍 搜索</button>
                     </div>
-                    <div class="csv-controls">
-                        <label for="questionTypeFilter">问题类型:</label>
-                        <select id="questionTypeFilter">
-                            <option value="all">显示全部</option>
-                        </select>
 
-                        <label for="subtypeFilter">筛选类型:</label>
-                        <select id="subtypeFilter">
-                            <option value="all">显示全部</option>
-                            <option value="文本回复" selected>只显示文本回复</option>
-                        </select>
-                        
+                    <div class="sessions-list">
+                        <div class="table-container">
+                            <table class="sessions-table">
+                                <thead>
+                                    <tr>
+                                        <th>会话名称</th>
+                                        <th>创建时间</th>
+                                        <th>问题数量</th>
+                                        <th>平均准确率</th>
+                                        <th>平均专业度</th>
+                                        <th>平均语气</th>
+                                        <th>首Token平均</th>
+                                        <th>首Token最小</th>
+                                        <th>首Token最高</th>
+                                        <th>平均段时长</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sessionsTableBody">
+                                    <!-- 动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
-
-                        <button id="downloadCsvBtn" class="btn-small" disabled>下载CSV</button>
+                    <div class="pagination">
+                        <button onclick="prevPage()">上一页</button>
+                        <span id="pageInfo">第 1 页，共 1 页</span>
+                        <button onclick="nextPage()">下一页</button>
                     </div>
                 </div>
-                <div class="csv-content">
-                    <div id="csvTableContainer">
-                        <table id="csvTable">
-                            <thead id="csvTableHead"></thead>
-                            <tbody id="csvTableBody"></tbody>
-                        </table>
-                    </div>
-                    <div id="csvStats" class="csv-stats"></div>
+            </div>
+
+            <!-- 统计分析页面 -->
+            <div id="statisticsPage" class="page-content" style="display: none;">
+                <div class="placeholder-content">
+                    <h2>📊 统计分析</h2>
+                    <p>功能开发中，敬请期待...</p>
+                </div>
+            </div>
+
+            <!-- 评估器管理页面 -->
+            <div id="evaluatorsPage" class="page-content" style="display: none;">
+                <div class="placeholder-content">
+                    <h2>🔧 评估器管理</h2>
+                    <p>功能开发中，敬请期待...</p>
                 </div>
             </div>
         </div>
@@ -856,11 +185,60 @@
         <div class="log-content" id="logContent"></div>
     </div>
 
+    <!-- 会话详情弹窗 -->
+    <div class="session-detail-modal" id="sessionDetailModal" style="display: none;">
+        <div class="session-modal-content">
+            <div class="modal-header">
+                <h3>📋 评估详情 - <span id="modalSessionName"></span></h3>
+                <button class="close-modal" onclick="closeSessionDetail()">&times;</button>
+            </div>
+            
 
+
+            <div class="modal-results-section">
+                <div class="csv-header">
+                    <div class="csv-title">
+                        <h4>📊 详细结果</h4>
+                    </div>
+                    <div class="csv-controls">
+                        <label for="modalQuestionTypeFilter">问题类型:</label>
+                        <select id="modalQuestionTypeFilter">
+                            <option value="all">显示全部</option>
+                        </select>
+                        
+                        <label for="modalSubtypeFilter">筛选类型:</label>
+                        <select id="modalSubtypeFilter">
+                            <option value="all">显示全部</option>
+                            <option value="文本回复" selected>只显示文本回复</option>
+                        </select>
+                        
+                        <button class="btn-small" onclick="exportSessionData()">📥 导出CSV</button>
+                    </div>
+                </div>
+                
+                <div class="csv-content">
+                    <div id="modalTableContainer">
+                        <table id="modalTable">
+                            <thead id="modalTableHead"></thead>
+                            <tbody id="modalTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div id="modalStats" class="csv-stats"></div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-small" onclick="deleteSessionFromModal()" style="background: #dc3545;">🗑️ 删除会话</button>
+                <button class="btn" onclick="closeSessionDetail()">关闭</button>
+            </div>
+        </div>
+    </div>
 
     <!-- 主应用架构 -->
     <script src="js/simple-list-renderer.js?v=3.0"></script>
     <script src="js/data-manager.js?v=3.0"></script>
     <script src="js/app.js?v=3.0"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/session-modal.js"></script>
 </body>
 </html>

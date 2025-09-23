@@ -180,11 +180,11 @@ router.post('/run-assessment', async (req, res) => {
         const metadata = {
           model: process.env.llm_model_name,
           ip: req.ip,
-          timestamp: new Date().toISOString()
+          fileName: 'frontend_data.json'
         };
         
-        const { batchId, count } = await saveAssessmentResults(data, metadata);
-        console.log(`✅ 已存储 ${count} 条评估结果，批次ID: ${batchId}`);
+        const { sessionId, count } = await saveAssessmentResults(data, metadata);
+        console.log(`✅ 已存储 ${count} 条评估结果，会话ID: ${sessionId}`);
         
         if (global.broadcastLog) {
           global.broadcastLog('success', `✅ 已存储 ${count} 条评估结果到数据库`);
