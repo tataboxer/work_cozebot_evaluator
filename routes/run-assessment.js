@@ -83,7 +83,7 @@ async function processSingleRow(rowData, sessionId) {
  */
 router.post('/run-assessment', async (req, res) => {
   try {
-    const { data: frontendData } = req.body;
+    const { data: frontendData, fileName } = req.body;
     
     if (!frontendData) {
       return res.status(400).json({
@@ -180,7 +180,7 @@ router.post('/run-assessment', async (req, res) => {
         const metadata = {
           model: process.env.llm_model_name,
           ip: req.ip,
-          fileName: 'frontend_data.json'
+          fileName: fileName || 'frontend_data.json'
         };
         
         const { sessionId, count } = await saveAssessmentResults(data, metadata);

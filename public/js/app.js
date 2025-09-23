@@ -4,6 +4,7 @@ class OptimizedAssessmentApp {
         this.initComplete = false;
         this.currentData = null;
         this.isAuthenticated = false;
+        this.currentFileName = null;
         
         // 中文表头映射
         this.columnMapping = {
@@ -254,9 +255,12 @@ class OptimizedAssessmentApp {
         if (file) {
             this.fileName.textContent = `已选择: ${file.name}`;
             this.processExcelBtn.disabled = false;
+            // 存储文件名（去掉扩展名）
+            this.currentFileName = file.name.replace(/\.[^/.]+$/, '');
         } else {
             this.fileName.textContent = '';
             this.processExcelBtn.disabled = true;
+            this.currentFileName = null;
         }
     }
 
@@ -344,7 +348,10 @@ class OptimizedAssessmentApp {
                     'Content-Type': 'application/json',
                     'X-Access-Key': localStorage.getItem('access_key')
                 },
-                body: JSON.stringify({ data: this.currentData })
+                body: JSON.stringify({ 
+                    data: this.currentData,
+                    fileName: this.currentFileName 
+                })
             });
 
             const result = await response.json();
