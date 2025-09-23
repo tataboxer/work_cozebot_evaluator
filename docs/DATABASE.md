@@ -123,14 +123,43 @@ CREATE INDEX idx_results_chatid ON assessment_results(chatid);
 - `evaluation_version`: 评估版本 (默认: 'v1.0')
 - `created_at`: 创建时间 (自动生成)
 
+### access_logs 表
+存储用户访问日志信息
+
+```sql
+CREATE TABLE access_logs (
+    id BIGSERIAL PRIMARY KEY,
+    ip_address TEXT NOT NULL,
+    user_agent TEXT,
+    path TEXT NOT NULL,
+    method TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_access_logs_ip_address ON access_logs(ip_address);
+CREATE INDEX idx_access_logs_path ON access_logs(path);
+CREATE INDEX idx_access_logs_method ON access_logs(method);
+CREATE INDEX idx_access_logs_created_at ON access_logs(created_at);
+```
+
+**字段说明**
+- `id`: 自增主键 (BIGSERIAL)
+- `ip_address`: 访问者IP地址
+- `user_agent`: 用户代理字符串
+- `path`: 访问路径
+- `method`: HTTP请求方法 (GET, POST, PUT, DELETE等)
+- `created_at`: 访问时间 (自动生成)
+
 ## 数据关系
 
 ```
 assessment_sessions (1) ←→ (N) assessment_results
+access_logs (独立表，用于访问日志记录)
 ```
 
 - 一个会话可以包含多个评估结果
 - 删除会话时级联删除相关的评估结果
+- access_logs 表独立存储访问日志，不与其他表关联
 
 ## 索引策略
 

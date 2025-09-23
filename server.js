@@ -48,6 +48,50 @@ app.use((req, res, next) => {
   next();
 });
 
+// IP访问记录中间件
+const supabase = require('./lib/supabase-client');
+app.use(async (req, res, next) => {
+  try {
+    const clientIP = req.headers['x-forwarded-for'] || 
+                     req.connection.remoteAddress || 
+                     req.socket.remoteAddress ||
+                     req.ip;
+    
+    // 记录到控制台（Railway日志可见）
+    console.log(`访问IP: ${clientIP} - ${req.method} ${req.path} - ${new Date().toISOString()}`);
+    
+    // 只记录重要访问（过滤静态资源和特殊路径）
+    const shouldLog = !req.path.match(/\.(css|js|ico|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/) &&
+                     !req.path.startsWith('/.well-known/') &&
+                     !req.path.startsWith('/api/logs');
+    
+    if (shouldLog) {
+      console.log('准备插入数据库:', {
+        ip_address: clientIP,
+        user_agent: req.headers['user-agent'],
+        path: req.path,
+        method: req.method
+      });
+      
+      const { data, error } = await supabase.from('access_logs').insert({
+        ip_address: clientIP,
+        user_agent: req.headers['user-agent'],
+        path: req.path,
+        method: req.method
+      });
+      
+      if (error) {
+        console.error('Supabase插入错误:', error);
+      } else {
+        console.log('数据库插入成功');
+      }
+    }
+  } catch (error) {
+    console.error('访问日志记录失败:', error);
+  }
+  next();
+});
+
 // 静态文件服务优化
 app.use(express.static('public', {
   maxAge: '1d', // 缓存一天
@@ -74,6 +118,7 @@ app.use('/api', verifyAccess);
 // 需要权限的API路由
 app.use('/api', require('./routes/run-assessment'));
 app.use('/api', require('./routes/preview-data'));
+
 app.use('/api/sessions', require('./routes/sessions'));
 app.use('/api/sessions', require('./routes/session-details'));
 
