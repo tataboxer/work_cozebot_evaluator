@@ -286,6 +286,61 @@ body {
     color: #7f8c8d;
 }
 
+/* 统计分析页面样式 */
+.statistics-container {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.statistics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.statistics-header h2 {
+    font-size: 1.8rem;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.date-filters {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.date-filters input {
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.chart-container {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+    min-height: 450px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#statisticsChart {
+    max-width: 100%;
+    max-height: 400px;
+}
+
 /* 文件输入样式 */
 .file-input {
     margin: 20px 0;
@@ -1052,5 +1107,21 @@ body {
     
     .modal-results-section {
         padding: 15px 20px;
+    }
+    
+    .statistics-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .date-filters {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .chart-container {
+        padding: 10px;
+        min-height: 300px;
     }
 }

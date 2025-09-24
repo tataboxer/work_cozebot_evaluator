@@ -163,9 +163,19 @@
 
             <!-- 统计分析页面 -->
             <div id="statisticsPage" class="page-content" style="display: none;">
-                <div class="placeholder-content">
-                    <h2>📊 统计分析</h2>
-                    <p>功能开发中，敬请期待...</p>
+                <div class="statistics-container">
+                    <div class="statistics-header">
+                        <h2>📊 统计分析</h2>
+                        <div class="date-filters">
+                            <input type="date" id="statsStartDate" placeholder="开始日期">
+                            <input type="date" id="statsEndDate" placeholder="结束日期">
+                            <button class="btn-small" onclick="loadStatistics()">📈 查询</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="statisticsChart" width="800" height="400"></canvas>
+                    </div>
+                    <div id="statisticsStatus" class="status"></div>
                 </div>
             </div>
 
@@ -242,11 +252,15 @@
         </div>
     </div>
 
+    <!-- Chart.js库 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <!-- 主应用架构 -->
     <script src="js/simple-list-renderer.js?v=3.0"></script>
     <script src="js/data-manager.js?v=3.0"></script>
     <script src="js/app.js?v=3.0"></script>
     <script src="js/navigation.js"></script>
     <script src="js/session-modal.js"></script>
+    <script src="js/statistics.js"></script>
 </body>
 </html>

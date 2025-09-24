@@ -128,6 +128,7 @@ app.use('/api', require('./routes/preview-data'));
 
 app.use('/api/sessions', require('./routes/sessions'));
 app.use('/api/sessions', require('./routes/session-details'));
+app.use('/api/statistics', require('./routes/statistics'));
 
 
 // SSE日志功能 (保留)

@@ -30,6 +30,11 @@ function showPage(pageId) {
     if (pageId === 'records') {
         loadSessions();
     }
+    
+    // 初始化统计分析页面
+    if (pageId === 'statistics' && typeof initStatistics === 'function') {
+        setTimeout(initStatistics, 100);
+    }
 }
 
 // 分页状态
