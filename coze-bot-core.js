@@ -24,7 +24,7 @@ function safeJsonParse(jsonString, fallback = null) {
 const DEFAULT_COZE_API_TOKEN = process.env.COZE_API_TOKEN;
 const DEFAULT_BOT_ID = process.env.COZE_BOT_ID;
 const DEFAULT_CONTENT = process.env.DEFAULT_CONTENT || '今天星期几';
-const DEFAULT_ACCESS_TOKEN = process.env.ACCESS_TOKEN;
+
 const PROJECT_ID = process.env.COZE_PROJECT_ID || 'fdb3e9f7-099b-3962-8ce5-0f67cd490d9f';
 
 /**
@@ -65,7 +65,7 @@ function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
     }
     
     // 使用环境变量中的配置
-    const accessToken = DEFAULT_ACCESS_TOKEN;
+    const accessToken = process.env.ACCESS_TOKEN; // 动态获取的token
     const apiToken = DEFAULT_COZE_API_TOKEN;
     const botId = DEFAULT_BOT_ID;
 

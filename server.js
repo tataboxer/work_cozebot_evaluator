@@ -60,10 +60,17 @@ app.use(async (req, res, next) => {
     // 记录到控制台（Railway日志可见）
     console.log(`访问IP: ${clientIP} - ${req.method} ${req.path} - ${new Date().toISOString()}`);
     
-    // 只记录重要访问（过滤静态资源和特殊路径）
+    // 过滤127.0.0.1和localhost访问
+    const isLocalhost = clientIP === '127.0.0.1' || 
+                       clientIP === '::1' || 
+                       clientIP === 'localhost' ||
+                       clientIP?.includes('127.0.0.1');
+    
+    // 只记录重要访问（过滤静态资源、特殊路径和本地访问）
     const shouldLog = !req.path.match(/\.(css|js|ico|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/) &&
                      !req.path.startsWith('/.well-known/') &&
-                     !req.path.startsWith('/api/logs');
+                     !req.path.startsWith('/api/logs') &&
+                     !isLocalhost;
     
     if (shouldLog) {
       console.log('准备插入数据库:', {

@@ -32,8 +32,14 @@ function showPage(pageId) {
     }
 }
 
+// 分页状态
+let currentPage = 1;
+let totalPages = 1;
+let pageSize = 20;
+let selectedSessions = new Set();
+
 // 加载会话列表
-async function loadSessions() {
+async function loadSessions(page = 1) {
     try {
         const accessKey = localStorage.getItem('access_key');
         
@@ -42,7 +48,22 @@ async function loadSessions() {
             return;
         }
         
-        const response = await fetch('/api/sessions', {
+        // 构建查询参数
+        const params = new URLSearchParams({
+            page: page,
+            limit: pageSize
+        });
+        
+        // 添加筛选条件
+        const startDate = document.getElementById('startDate')?.value;
+        const endDate = document.getElementById('endDate')?.value;
+        const sessionName = document.getElementById('sessionNameFilter')?.value;
+        
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+        if (sessionName) params.append('sessionName', sessionName);
+        
+        const response = await fetch(`/api/sessions?${params}`, {
             headers: {
                 'x-access-key': accessKey
             }
@@ -54,17 +75,26 @@ async function loadSessions() {
         
         const data = await response.json();
         
+        // 更新分页状态
+        currentPage = data.pagination.page;
+        totalPages = data.pagination.totalPages;
+        
         const tbody = document.getElementById('sessionsTableBody');
         tbody.innerHTML = '';
         
         if (!data.sessions || data.sessions.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; color: #666;">暂无数据</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="13" style="text-align: center; color: #666;">暂无数据</td></tr>';
+            totalPages = 0;
+            currentPage = 0;
+            updatePaginationUI();
             return;
         }
         
         data.sessions.forEach(session => {
             const row = document.createElement('tr');
+            const isSelected = selectedSessions.has(session.session_id);
             row.innerHTML = `
+                <td><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleSessionSelection('${session.session_id}', this.checked)"></td>
                 <td>${session.session_name || session.session_id}</td>
                 <td>${new Date(session.created_at).toLocaleString()}</td>
                 <td>${session.total_questions}</td>
@@ -84,9 +114,8 @@ async function loadSessions() {
             tbody.appendChild(row);
         });
         
-        // 更新分页信息
-        document.getElementById('pageInfo').textContent = 
-            `第 ${data.pagination.page} 页，共 ${data.pagination.totalPages} 页`;
+        updatePaginationUI();
+        updateBatchDeleteButton();
             
     } catch (error) {
         console.error('加载会话列表失败:', error);
@@ -127,9 +156,97 @@ function searchSessions() {
 
 // 分页功能
 function prevPage() {
-    // TODO: 实现上一页
+    if (currentPage > 1) {
+        loadSessions(currentPage - 1);
+    }
 }
 
 function nextPage() {
-    // TODO: 实现下一页
+    if (currentPage < totalPages) {
+        loadSessions(currentPage + 1);
+    }
+}
+
+function updatePaginationUI() {
+    const pageInfo = document.getElementById('pageInfo');
+    if (totalPages === 0) {
+        pageInfo.textContent = '暂无数据';
+    } else {
+        pageInfo.textContent = `第 ${currentPage} 页，共 ${totalPages} 页`;
+    }
+}
+
+// 多选功能
+function toggleSelectAll(checked) {
+    const checkboxes = document.querySelectorAll('#sessionsTableBody input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+        cb.checked = checked;
+        const sessionId = cb.onchange.toString().match(/'([^']+)'/)[1];
+        if (checked) {
+            selectedSessions.add(sessionId);
+        } else {
+            selectedSessions.delete(sessionId);
+        }
+    });
+    updateBatchDeleteButton();
+}
+
+function toggleSessionSelection(sessionId, checked) {
+    if (checked) {
+        selectedSessions.add(sessionId);
+    } else {
+        selectedSessions.delete(sessionId);
+    }
+    updateBatchDeleteButton();
+    
+    const allCheckboxes = document.querySelectorAll('#sessionsTableBody input[type="checkbox"]');
+    const checkedCount = document.querySelectorAll('#sessionsTableBody input[type="checkbox"]:checked').length;
+    const selectAllCheckbox = document.getElementById('selectAll');
+    
+    if (checkedCount === 0) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+    } else if (checkedCount === allCheckboxes.length) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = true;
+    } else {
+        selectAllCheckbox.indeterminate = true;
+    }
+}
+
+function updateBatchDeleteButton() {
+    const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+    if (selectedSessions.size > 0) {
+        batchDeleteBtn.style.display = 'inline-block';
+        batchDeleteBtn.textContent = `🗑️ 批量删除 (${selectedSessions.size})`;
+    } else {
+        batchDeleteBtn.style.display = 'none';
+    }
+}
+
+// 批量删除功能
+async function batchDeleteSessions() {
+    if (selectedSessions.size === 0) return;
+    
+    if (!confirm(`确定要删除这 ${selectedSessions.size} 个会话吗？`)) return;
+    
+    const accessKey = localStorage.getItem('access_key');
+    const sessionIds = Array.from(selectedSessions);
+    
+    try {
+        const deletePromises = sessionIds.map(sessionId => 
+            fetch(`/api/sessions/${sessionId}`, {
+                method: 'DELETE',
+                headers: { 'x-access-key': accessKey }
+            })
+        );
+        
+        await Promise.all(deletePromises);
+        selectedSessions.clear();
+        loadSessions(currentPage);
+        alert('批量删除成功');
+    } catch (error) {
+        console.error('批量删除失败:', error);
+        alert('批量删除失败');
+    }
 }

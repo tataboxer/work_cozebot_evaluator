@@ -25,11 +25,14 @@ router.get('/', async (req, res) => {
       query = query.ilike('session_name', `%${sessionName}%`);
     }
 
-    // 分页
-    const offset = (page - 1) * limit;
-    query = query.range(offset, offset + limit - 1);
+    // 获取总数
+    const { count: totalCount } = await supabase
+      .from('assessment_sessions')
+      .select('*', { count: 'exact', head: true });
 
-    const { data, error, count } = await query;
+    // 分页查询
+    const offset = (page - 1) * limit;
+    const { data, error } = await query.range(offset, offset + limit - 1);
     
     if (error) throw error;
 
@@ -38,8 +41,8 @@ router.get('/', async (req, res) => {
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
-        total: count,
-        totalPages: Math.ceil(count / limit)
+        total: totalCount,
+        totalPages: Math.ceil(totalCount / limit)
       }
     });
   } catch (error) {

@@ -117,7 +117,13 @@
                         <input type="date" id="startDate" placeholder="开始日期">
                         <input type="date" id="endDate" placeholder="结束日期">
                         <input type="text" id="sessionNameFilter" placeholder="会话名称">
+                        <select id="pageSizeSelect" onchange="changePageSize()">
+                            <option value="10" selected>每页 10 条</option>
+                            <option value="20">每页 20 条</option>
+                            <option value="50">每页 50 条</option>
+                        </select>
                         <button class="btn-small" onclick="searchSessions()">🔍 搜索</button>
+                        <button class="btn-small" id="batchDeleteBtn" onclick="batchDeleteSessions()" style="background: #dc3545; display: none;">🗑️ 批量删除</button>
                     </div>
 
                     <div class="sessions-list">
@@ -125,6 +131,7 @@
                             <table class="sessions-table">
                                 <thead>
                                     <tr>
+                                        <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)"></th>
                                         <th>会话名称</th>
                                         <th>创建时间</th>
                                         <th>问题数量</th>
