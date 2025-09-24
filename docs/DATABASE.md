@@ -267,9 +267,60 @@ const { data, error } = await supabase
   .insert(results);
 ```
 
+## 存储过程
+
+### get_daily_statistics 函数
+用于统计分析页面的日度数据聚合查询
+
+```sql
+CREATE OR REPLACE FUNCTION get_daily_statistics(start_date DATE, end_date DATE)
+RETURNS TABLE (
+    date_beijing DATE,
+    avg_first_token_duration NUMERIC(10,3),
+    avg_accuracy NUMERIC(5,1),
+    avg_professionalism NUMERIC(5,1),
+    avg_tone_reasonableness NUMERIC(5,1),
+    total_records BIGINT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        DATE(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Shanghai') as date_beijing,
+        ROUND(AVG(block_start), 3) as avg_first_token_duration,
+        ROUND(AVG(((evaluation_results->'accuracy'->>'score')::numeric)), 1) as avg_accuracy,
+        ROUND(AVG(((evaluation_results->'professionalism'->>'score')::numeric)), 1) as avg_professionalism,
+        ROUND(AVG(((evaluation_results->'tone_reasonableness'->>'score')::numeric)), 1) as avg_tone_reasonableness,
+        COUNT(*) as total_records
+    FROM assessment_results 
+    WHERE evaluation_results IS NOT NULL 
+        AND block_start IS NOT NULL
+        AND evaluation_results->'accuracy'->>'score' IS NOT NULL
+        AND DATE(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Shanghai') BETWEEN start_date AND end_date
+    GROUP BY DATE(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Shanghai')
+    ORDER BY date_beijing ASC;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+**功能说明**
+- 按北京时间自然日分组统计
+- 计算平均首Token时长（精度3位小数）
+- 计算三个评估维度的平均分数（精度1位小数）
+- 返回每日记录总数
+- 自动过滤无效数据
+
+**调用方式**
+```javascript
+const { data, error } = await supabase.rpc('get_daily_statistics', {
+    start_date: '2025-01-01',
+    end_date: '2025-01-31'
+});
+```
+
 ## 性能优化
 - PostgreSQL索引优化
 - JSONB字段高效查询
 - 分页查询和实时订阅
 - Supabase Edge Functions
 - 连接池和查询优化
+- 存储过程减少网络传输和内存使用
