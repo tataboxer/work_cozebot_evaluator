@@ -16,80 +16,25 @@ router.get('/daily-stats', async (req, res) => {
             return res.status(400).json({ error: '缺少日期参数' });
         }
 
-        const { data, error } = await supabase
-            .from('assessment_results')
-            .select(`
-                created_at,
-                block_start,
-                evaluation_results
-            `)
-            .not('evaluation_results', 'is', null)
-            .not('block_start', 'is', null)
-            .gte('created_at', startDate + 'T00:00:00Z')
-            .lte('created_at', endDate + 'T23:59:59Z');
+        const { data, error } = await supabase.rpc('get_daily_statistics', {
+            start_date: startDate,
+            end_date: endDate
+        });
 
         if (error) {
-            console.error('查询原始数据失败:', error);
-            return res.status(500).json({ error: '查询数据失败' });
+            console.error('调用存储过程失败:', error);
+            return res.status(500).json({ error: '查询统计数据失败' });
         }
 
-        // 在后端处理数据聚合
-        const dailyStats = {};
-        
-        data.forEach(record => {
-            // 转换为北京时间并获取日期
-            const beijingDate = new Date(record.created_at).toLocaleDateString('zh-CN', {
-                timeZone: 'Asia/Shanghai',
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit'
-            }).replace(/\//g, '-');
-            
-            if (!dailyStats[beijingDate]) {
-                dailyStats[beijingDate] = {
-                    日期: beijingDate,
-                    tokenDurations: [],
-                    accuracyScores: [],
-                    professionalismScores: [],
-                    toneScores: [],
-                    count: 0
-                };
-            }
-            
-            const stats = dailyStats[beijingDate];
-            stats.count++;
-            
-            if (record.block_start) {
-                stats.tokenDurations.push(parseFloat(record.block_start));
-            }
-            
-            if (record.evaluation_results) {
-                const results = record.evaluation_results;
-                if (results.accuracy && results.accuracy.score) {
-                    stats.accuracyScores.push(parseFloat(results.accuracy.score));
-                }
-                if (results.professionalism && results.professionalism.score) {
-                    stats.professionalismScores.push(parseFloat(results.professionalism.score));
-                }
-                if (results.tone_reasonableness && results.tone_reasonableness.score) {
-                    stats.toneScores.push(parseFloat(results.tone_reasonableness.score));
-                }
-            }
-        });
-        
-        // 计算平均值
-        const result = Object.values(dailyStats).map(stats => ({
-            日期: stats.日期,
-            首TOKEN时长: stats.tokenDurations.length > 0 ? 
-                (stats.tokenDurations.reduce((a, b) => a + b, 0) / stats.tokenDurations.length).toFixed(3) : 0,
-            准确率: stats.accuracyScores.length > 0 ? 
-                (stats.accuracyScores.reduce((a, b) => a + b, 0) / stats.accuracyScores.length).toFixed(1) : 0,
-            专业度: stats.professionalismScores.length > 0 ? 
-                (stats.professionalismScores.reduce((a, b) => a + b, 0) / stats.professionalismScores.length).toFixed(1) : 0,
-            语气合理: stats.toneScores.length > 0 ? 
-                (stats.toneScores.reduce((a, b) => a + b, 0) / stats.toneScores.length).toFixed(1) : 0,
-            total_records: stats.count
-        })).sort((a, b) => new Date(a.日期) - new Date(b.日期));
+        // 转换字段名为中文（保持前端兼容）
+        const result = data.map(row => ({
+            日期: row.date_beijing,
+            首TOKEN时长: row.avg_first_token_duration,
+            准确率: row.avg_accuracy,
+            专业度: row.avg_professionalism,
+            语气合理: row.avg_tone_reasonableness,
+            total_records: row.total_records
+        }));
 
         res.json({ data: result });
     } catch (error) {
