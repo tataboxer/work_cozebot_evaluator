@@ -298,82 +298,9 @@ function filterModalData() {
 
 // 更新统计信息
 function updateModalStats(results) {
-    const totalRows = results.length;
-    const answerRows = results.filter(row => row.block_type === 'answer').length;
-    const textReplyRows = results.filter(row => row.block_subtype === '文本回复').length;
-    
-    const evaluatedRows = results.filter(row => {
-        const eval_results = row.evaluation_results || {};
-        return eval_results.accuracy && eval_results.professionalism && eval_results.tone_reasonableness;
-    }).length;
-    
-    const scores = { accuracy: [], professionalism: [], tone: [] };
-    const timings = { firstToken: [], duration: [] };
-    
-    results.forEach(row => {
-        const eval_results = row.evaluation_results || {};
-        if (eval_results.accuracy?.score) scores.accuracy.push(parseFloat(eval_results.accuracy.score));
-        if (eval_results.professionalism?.score) scores.professionalism.push(parseFloat(eval_results.professionalism.score));
-        if (eval_results.tone_reasonableness?.score) scores.tone.push(parseFloat(eval_results.tone_reasonableness.score));
-        
-        if (row.block_start && row.block_end) {
-            const startTime = parseFloat(row.block_start);
-            const endTime = parseFloat(row.block_end);
-            if (!isNaN(startTime) && !isNaN(endTime)) {
-                timings.firstToken.push(startTime);
-                timings.duration.push(endTime - startTime);
-            }
-        }
-    });
-    
-    const avgAccuracy = scores.accuracy.length ? (scores.accuracy.reduce((a, b) => a + b, 0) / scores.accuracy.length).toFixed(2) : 'N/A';
-    const avgProfessionalism = scores.professionalism.length ? (scores.professionalism.reduce((a, b) => a + b, 0) / scores.professionalism.length).toFixed(2) : 'N/A';
-    const avgTone = scores.tone.length ? (scores.tone.reduce((a, b) => a + b, 0) / scores.tone.length).toFixed(2) : 'N/A';
-    
-    const avgFirstToken = timings.firstToken.length ? (timings.firstToken.reduce((a, b) => a + b, 0) / timings.firstToken.length).toFixed(1) : 'N/A';
-    const avgDuration = timings.duration.length ? (timings.duration.reduce((a, b) => a + b, 0) / timings.duration.length).toFixed(1) : 'N/A';
-    
-    const minFirstToken = timings.firstToken.length ? Math.min(...timings.firstToken).toFixed(1) : 'N/A';
-    const maxFirstToken = timings.firstToken.length ? Math.max(...timings.firstToken).toFixed(1) : 'N/A';
-    const minDuration = timings.duration.length ? Math.min(...timings.duration).toFixed(1) : 'N/A';
-    const maxDuration = timings.duration.length ? Math.max(...timings.duration).toFixed(1) : 'N/A';
-    
-    const statsHTML = `
-        <div class="stats-item">
-            <span class="stats-label">总行数:</span>
-            <span class="stats-value">${totalRows}</span>
-            <span class="stats-separator">|</span>
-        </div>
-        <div class="stats-item">
-            <span class="stats-label">显示行数:</span>
-            <span class="stats-value">${totalRows}</span>
-            <span class="stats-separator">|</span>
-        </div>
-        <div class="stats-item">
-            <span class="stats-label">文本回复:</span>
-            <span class="stats-value">${textReplyRows}</span>
-            <span class="stats-separator">|</span>
-        </div>
-        <div class="stats-item">
-            <span class="stats-label">已评估:</span>
-            <span class="stats-value">${evaluatedRows}/${answerRows}</span>
-            <span class="stats-separator">|</span>
-        </div>
-        <div class="stats-item timing-stats">
-            <span class="stats-label">首token平均时长:</span>
-            <span class="stats-value">${avgFirstToken}s (${minFirstToken}-${maxFirstToken})</span>
-            <span class="stats-separator">|</span>
-            <span class="stats-label">段平均时长:</span>
-            <span class="stats-value">${avgDuration}s (${minDuration}-${maxDuration})</span>
-        </div>
-        <div class="stats-item">
-            <span class="stats-label">平均分数:</span>
-            <span class="stats-value">准确率: ${avgAccuracy} | 专业度: ${avgProfessionalism} | 语气: ${avgTone}</span>
-            <span class="stats-separator">|</span>
-        </div>
-    `;
-    
-    document.getElementById('modalStats').innerHTML = statsHTML;
+    // 使用统一的统计计算模块
+    const stats = window.StatisticsUtils.calculateStatistics(results);
+    document.getElementById('modalStats').innerHTML = window.StatisticsUtils.generateStatsHTML(stats);
 }
 
 // 导出会话数据

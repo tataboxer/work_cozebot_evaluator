@@ -2,10 +2,6 @@
  * 访问权限验证中间件
  */
 function verifyAccess(req, res, next) {
-  // 跳过验证接口本身
-  if (req.path === '/api/verify-access' || req.url === '/api/verify-access') {
-    return next();
-  }
   
   // 对于/api/logs，检查URL参数中的accessKey
   if (req.path === '/api/logs' || req.url.startsWith('/api/logs')) {

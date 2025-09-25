@@ -40,7 +40,7 @@ function showPage(pageId) {
 // 分页状态
 let currentPage = 1;
 let totalPages = 1;
-let pageSize = 20;
+let pageSize = 10; // 与HTML默认值保持一致
 let selectedSessions = new Set();
 
 // 加载会话列表
@@ -103,9 +103,9 @@ async function loadSessions(page = 1) {
                 <td>${session.session_name || session.session_id}</td>
                 <td>${new Date(session.created_at).toLocaleString()}</td>
                 <td>${session.total_questions}</td>
-                <td>${session.evaluation_summary?.avgAccuracy || '-'}</td>
-                <td>${session.evaluation_summary?.avgProfessionalism || '-'}</td>
-                <td>${session.evaluation_summary?.avgToneReasonableness || '-'}</td>
+                <td>${session.evaluation_summary?.avgAccuracy ? session.evaluation_summary.avgAccuracy.toFixed(2) : '-'}</td>
+                <td>${session.evaluation_summary?.avgProfessionalism ? session.evaluation_summary.avgProfessionalism.toFixed(2) : '-'}</td>
+                <td>${session.evaluation_summary?.avgToneReasonableness ? session.evaluation_summary.avgToneReasonableness.toFixed(2) : '-'}</td>
                 <td>${session.first_token_avg_duration ? session.first_token_avg_duration.toFixed(1) + 's' : '-'}</td>
                 <td>${session.first_token_min_duration ? session.first_token_min_duration.toFixed(1) + 's' : '-'}</td>
                 <td>${session.first_token_max_duration ? session.first_token_max_duration.toFixed(1) + 's' : '-'}</td>
@@ -170,6 +170,14 @@ function nextPage() {
     if (currentPage < totalPages) {
         loadSessions(currentPage + 1);
     }
+}
+
+// 改变页面大小
+function changePageSize() {
+    const select = document.getElementById('pageSizeSelect');
+    pageSize = parseInt(select.value);
+    currentPage = 1; // 重置到第一页
+    loadSessions(1);
 }
 
 function updatePaginationUI() {

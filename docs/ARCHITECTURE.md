@@ -50,6 +50,7 @@ public/
 ├── index.html          # 主页面
 ├── css/styles.css      # 样式文件
 └── js/
+    ├── universal-statistics.js # 前端统计工具
     ├── app.js          # 主应用逻辑
     ├── navigation.js   # 导航管理
     ├── data-manager.js # 数据管理
@@ -61,6 +62,7 @@ public/
 - 用户界面展示
 - 用户交互处理
 - 数据可视化
+- 统一统计计算（前端）
 - 状态管理
 
 ### 2. 应用层 (Application Layer)
@@ -81,6 +83,7 @@ routes/
 ### 3. 业务逻辑层 (Business Logic Layer)
 ```
 lib/
+├── universal-statistics.js # 通用统计计算模块
 ├── token-manager.js    # Token管理
 ├── coze-client.js      # Coze API客户端
 ├── llm-client.js       # LLM API客户端
@@ -89,6 +92,7 @@ lib/
 
 **职责**:
 - 核心业务逻辑
+- 统一统计计算（支持Node.js和浏览器环境）
 - 外部API集成
 - 数据处理算法
 - 业务规则实现

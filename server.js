@@ -110,11 +110,9 @@ app.use(express.static('public', {
 
 // 注册新架构路由
 const processExcelRouter = require('./routes/process-excel');
-const downloadCsvRouter = require('./routes/download-csv');
 
 // 先注册不需要验证的路由
 app.use('/', processExcelRouter);
-app.use('/', downloadCsvRouter);
 
 app.use('/api', require('./routes/verify-access'));
 
@@ -124,7 +122,6 @@ app.use('/api', verifyAccess);
 
 // 需要权限的API路由
 app.use('/api', require('./routes/run-assessment'));
-app.use('/api', require('./routes/preview-data'));
 
 app.use('/api/sessions', require('./routes/sessions'));
 app.use('/api/sessions', require('./routes/session-details'));
@@ -194,7 +191,6 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 服务器启动成功！`);
   console.log(`📍 本地访问: http://localhost:${PORT}`);
   console.log(`🌐 局域网访问: http://${localIP}:${PORT}`);
-  console.log(`📊 新架构已启用 - 纯前端数据模式`);
 });
 
 // 优雅关闭

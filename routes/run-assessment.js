@@ -1,11 +1,10 @@
-// 评估路由 - 基于assess.py完整重构
 const express = require('express');
 const router = express.Router();
 const { evaluateWithLLM } = require('../lib/llm-client');
 const { saveAssessmentResults } = require('../lib/assessment-storage');
 
 /**
- * 处理单行数据的函数 - 对应assess.py的process_single_row
+ * 处理单行数据的函数 
  */
 async function processSingleRow(rowData, sessionId) {
   const { index, row } = rowData;

@@ -191,12 +191,12 @@ WHERE session_id IS NULL AND batch_id IS NOT NULL;
 ### 数据备份
 - Supabase自动备份: 每日自动备份
 - 手动备份: 通过Supabase Dashboard导出
-- CSV导出: 支持单个会话和批量导出
+- CSV导出: 支持前端单个会话导出
 
 ### 数据恢复
 - Supabase Point-in-Time Recovery
 - 从备份文件恢复
-- CSV批量导入功能
+- 前端CSV导出功能
 
 ## 性能考虑
 

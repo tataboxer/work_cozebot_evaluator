@@ -16,7 +16,7 @@ class DataManager {
         this.currentData = null;
     }
     
-    // 前端CSV生成 - 复制服务器端逻辑
+    // 前端CSV生成 
     generateCSV() {
         if (!this.currentData || this.currentData.length === 0) {
             throw new Error('没有可导出的数据');

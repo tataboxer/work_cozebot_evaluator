@@ -198,11 +198,13 @@ body {
     align-items: center;
 }
 
-.search-filters input {
+.search-filters input,
+.search-filters select {
     padding: 10px 15px;
     border: 1px solid #ddd;
     border-radius: 8px;
     font-size: 0.9rem;
+    background: white;
 }
 
 .table-container {

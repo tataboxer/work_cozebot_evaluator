@@ -10,7 +10,6 @@ X-Access-Key: your_access_key
 
 **无需认证的接口：**
 - `POST /process-excel`
-- `GET /download-csv`
 - `POST /api/verify-access`
 
 **需要认证的接口：**
