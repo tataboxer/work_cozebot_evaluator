@@ -168,7 +168,6 @@ class OptimizedAssessmentApp {
         // 核心按钮
         this.processExcelBtn = document.getElementById('processExcelBtn');
         this.runAssessmentBtn = document.getElementById('runAssessmentBtn');
-        this.downloadCsvBtn = document.getElementById('downloadCsvBtn');
         
         // 文件输入
         this.excelFileInput = document.getElementById('excelFile');
@@ -214,9 +213,7 @@ class OptimizedAssessmentApp {
         if (this.runAssessmentBtn) {
             this.runAssessmentBtn.addEventListener('click', () => this.runAssessment());
         }
-        if (this.downloadCsvBtn) {
-            this.downloadCsvBtn.addEventListener('click', () => this.downloadCsv());
-        }
+
         if (this.subtypeFilter) {
             this.subtypeFilter.addEventListener('change', () => this.filterData());
         }
@@ -384,21 +381,7 @@ class OptimizedAssessmentApp {
 
 
 
-    downloadCsv() {
-        if (!this.currentData || !window.dataManager) {
-            this.showStatus(this.assessmentStatus, 'error', '❌ 没有可下载的数据');
-            return;
-        }
 
-        try {
-            const filename = `assessment_results_${new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-')}.csv`;
-            window.dataManager.downloadCSV(filename);
-            this.showStatus(this.assessmentStatus, 'success', '✅ CSV下载成功');
-        } catch (error) {
-            console.error('CSV下载失败:', error);
-            this.showStatus(this.assessmentStatus, 'error', `❌ CSV下载失败: ${error.message}`);
-        }
-    }
 
     refreshUI() {
         if (!this.currentData || this.currentData.length === 0) {
@@ -408,7 +391,6 @@ class OptimizedAssessmentApp {
 
         this.displayData(this.currentData);
         this.csvDisplaySection.style.display = 'block';
-        this.downloadCsvBtn.disabled = false;
         this.csvFileName.textContent = `📁 数据预览 (${this.currentData.length}条记录)`;
         this.csvFileName.className = 'csv-filename loaded';
     }

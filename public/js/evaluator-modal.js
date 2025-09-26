@@ -31,7 +31,7 @@ class EvaluatorModal {
               <div class="form-group">
                 <label>适用类型:</label>
                 <input type="text" id="questionType" placeholder="如：票务、展厅、活动等（默认评估器请留空）">
-                <small>注：默认评估器的适用类型为空且不可编辑</small>
+                <small>注：评估器适用类型需 匹配 测试集“问题类型”</small>
               </div>
 
             </div>
@@ -68,7 +68,7 @@ class EvaluatorModal {
             <div class="form-section">
               <h4>📋 输入/输出格式 (只读)</h4>
               <div class="readonly-info">
-                <p><strong>输入参数:</strong> question, answer, context, expectedAnswer</p>
+                <p><strong>输入参数:</strong> 用户问题question, AI回复answer, 历史对话context, 期望答案expectedAnswer</p>
                 <p><strong>输出格式:</strong> {"准确率": {"分数": 数字, "理由": "简要说明"}, "专业度": {"分数": 数字, "理由": "简要说明"}, "语气合理": {"分数": 数字, "理由": "简要说明"}}</p>
               </div>
             </div>

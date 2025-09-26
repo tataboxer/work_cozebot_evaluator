@@ -112,8 +112,14 @@ async function loadSessions(page = 1) {
                 <td>${session.avg_block_duration ? session.avg_block_duration.toFixed(1) + 's' : '-'}</td>
                 <td>${session.config?.ip || '-'}</td>
                 <td>
-                    <button class="btn-small" onclick="viewSessionDetail('${session.session_id}')">查看</button>
-                    <button class="btn-small" onclick="deleteSession('${session.session_id}')" style="background: #dc3545; margin-left: 5px;">删除</button>
+                    <div class="action-buttons">
+                        <a href="javascript:void(0)" onclick="viewSessionDetail('${session.session_id}')" style="color: #007bff; text-decoration: none; margin-right: 15px;">
+                            <i class="fas fa-eye"></i> 查看
+                        </a>
+                        <a href="javascript:void(0)" onclick="deleteSession('${session.session_id}')" style="color: #dc3545; text-decoration: none;">
+                            <i class="fas fa-trash"></i> 删除
+                        </a>
+                    </div>
                 </td>
             `;
             tbody.appendChild(row);

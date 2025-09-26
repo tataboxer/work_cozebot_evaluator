@@ -144,12 +144,19 @@ function renderModalTableHeader(columns) {
             ${columns.map(col => {
                 const displayName = MODAL_COLUMN_MAPPING[col] || col;
                 const width = getModalColumnWidth(col);
-                return `<th style="width: ${width}px;">${displayName}<div class="resize-handle"></div></th>`;
+                const isSortable = isModalSortableColumn(col);
+                return `
+                    <th class="${isSortable ? 'sortable' : ''}" data-column="${col}" data-sort="none" style="width: ${width}px;">
+                        ${displayName}
+                        <div class="resize-handle"></div>
+                    </th>
+                `;
             }).join('')}
         </tr>
     `;
     
-    // 初始化列宽拖拽
+    // 初始化排序和列宽拖拽
+    initModalColumnSorting();
     initModalColumnResize();
 }
 
@@ -363,6 +370,98 @@ async function deleteSessionFromModal() {
         console.error('删除会话失败:', error);
         alert('删除失败');
     }
+}
+
+// 判断列是否可排序
+function isModalSortableColumn(columnName) {
+    const sortableColumns = [
+        'block_start',
+        'block_end', 
+        '准确率',
+        '专业度',
+        '语气合理'
+    ];
+    return sortableColumns.includes(columnName);
+}
+
+// 初始化排序功能
+function initModalColumnSorting() {
+    const sortableHeaders = document.querySelectorAll('#modalTableHead th.sortable');
+    
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', (e) => {
+            if (e.target.classList.contains('resize-handle')) return;
+            
+            const columnName = header.dataset.column;
+            const currentSort = header.dataset.sort;
+            
+            // 清除其他列的排序状态
+            sortableHeaders.forEach(h => {
+                if (h !== header) {
+                    h.dataset.sort = 'none';
+                    h.classList.remove('sort-asc', 'sort-desc');
+                }
+            });
+            
+            let newSort = (currentSort === 'none' || currentSort === 'desc') ? 'asc' : 'desc';
+            
+            header.dataset.sort = newSort;
+            header.classList.remove('sort-asc', 'sort-desc');
+            header.classList.add(`sort-${newSort}`);
+            
+            sortModalData(columnName, newSort);
+        });
+    });
+}
+
+// 排序数据
+function sortModalData(columnName, direction) {
+    if (!currentModalData || currentModalData.length === 0) return;
+    
+    // 获取当前筛选条件
+    const questionTypeFilter = document.getElementById('modalQuestionTypeFilter').value;
+    const subtypeFilter = document.getElementById('modalSubtypeFilter').value;
+    
+    let filteredData = [...currentModalData];
+    
+    if (questionTypeFilter !== 'all') {
+        filteredData = filteredData.filter(row => row.question_type === questionTypeFilter);
+    }
+    if (subtypeFilter !== 'all') {
+        filteredData = filteredData.filter(row => row.block_subtype === subtypeFilter);
+    }
+    
+    // 排序
+    filteredData.sort((a, b) => {
+        let valueA = getColumnValue(a, columnName);
+        let valueB = getColumnValue(b, columnName);
+        
+        // 数值列转换
+        if (columnName === 'block_start' || columnName === 'block_end' || 
+            columnName === '准确率' || columnName === '专业度' || columnName === '语气合理') {
+            valueA = parseFloat(valueA) || 0;
+            valueB = parseFloat(valueB) || 0;
+        }
+        
+        // 处理空值
+        if (valueA === null || valueA === undefined || valueA === '') valueA = direction === 'asc' ? Infinity : -Infinity;
+        if (valueB === null || valueB === undefined || valueB === '') valueB = direction === 'asc' ? Infinity : -Infinity;
+        
+        if (direction === 'asc') {
+            return valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
+        } else {
+            return valueA > valueB ? -1 : valueA < valueB ? 1 : 0;
+        }
+    });
+    
+    // 重新渲染表格
+    const evaluationColumns = parseEvaluationResults(filteredData[0]?.evaluation_results);
+    const baseColumns = ['question_text', 'context', 'ai_response', 'block_start', 'block_end', 'expected_answer'];
+    const endColumns = ['question_id', 'question_type', 'chatid', 'block_type', 'block_subtype', 'evaluator_info'];
+    const fullColumns = [...baseColumns, ...evaluationColumns, ...endColumns];
+    
+    renderModalTableBody(filteredData, fullColumns);
+    updateModalStats(filteredData);
 }
 
 // 初始化modal列宽拖拽
