@@ -109,7 +109,7 @@ function renderChart(data) {
                     data: accuracyScores,
                     borderColor: 'rgba(40, 167, 69, 1)',
                     backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                    borderWidth: 2,
+                    borderWidth: 4,
                     fill: false,
                     tension: 0.4,
                     yAxisID: 'y1'
@@ -171,6 +171,11 @@ function renderChart(data) {
                                 label += context.parsed.y.toFixed(1) + '分';
                             }
                             return label;
+                        },
+                        afterBody: function(context) {
+                            const dataIndex = context[0].dataIndex;
+                            const questionCount = data[dataIndex].total_records;
+                            return `问题数量: ${questionCount}`;
                         }
                     }
                 }

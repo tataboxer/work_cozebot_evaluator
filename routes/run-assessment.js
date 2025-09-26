@@ -55,10 +55,14 @@ async function processSingleRow(rowData, sessionId) {
     expectedAnswer = String(row.expected_answer);
   }
 
-  // 调用LLM评估
-  const evaluation = await evaluateWithLLM(question, answer, context, expectedAnswer);
+  // 调用LLM评估（传入问题类型）
+  const evaluationResult = await evaluateWithLLM(question, answer, context, expectedAnswer, row.question_type);
 
-  if (evaluation) {
+  if (evaluationResult && evaluationResult.evaluation) {
+    const evaluation = evaluationResult.evaluation;
+    const evaluatorInfo = evaluationResult.evaluatorInfo || '默认评估器 v1';
+    const evaluatorVersionId = evaluationResult.evaluatorVersionId || null;
+
     try {
       console.log(`✓ 评估成功 - 准确率:${evaluation['准确率']['分数']} 专业度:${evaluation['专业度']['分数']} 语气:${evaluation['语气合理']['分数']}`);
       
@@ -66,7 +70,7 @@ async function processSingleRow(rowData, sessionId) {
       if (global.broadcastLog) {
         global.broadcastLog('success', `[${index + 1}] 评估成功 - 准确率:${evaluation['准确率']['分数']} 专业度:${evaluation['专业度']['分数']} 语气:${evaluation['语气合理']['分数']}`);
       }
-      return { index, success: true, evaluation };
+      return { index, success: true, evaluation, evaluatorInfo, evaluatorVersionId };
     } catch (error) {
       console.log(`✗ 评估结果格式错误: ${error.message}`);
       return { index, success: false, error: `格式错误: ${error.message}` };
@@ -148,6 +152,8 @@ router.post('/run-assessment', async (req, res) => {
           dataRow['专业度_理由'] = result.evaluation['专业度']['理由'];
           dataRow['语气合理'] = result.evaluation['语气合理']['分数'];
           dataRow['语气合理_理由'] = result.evaluation['语气合理']['理由'];
+          dataRow['evaluator_info'] = result.evaluatorInfo || '默认评估器 v1';
+          dataRow['evaluator_version_id'] = result.evaluatorVersionId || null;
         }
         
         // 更新进度
@@ -177,7 +183,6 @@ router.post('/run-assessment', async (req, res) => {
     if (successCount > 0) {
       try {
         const metadata = {
-          model: process.env.llm_model_name,
           ip: req.ip,
           fileName: fileName || 'frontend_data.json'
         };

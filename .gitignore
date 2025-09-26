@@ -47,6 +47,9 @@ log.md
 *.tmp
 docs/temp
 
+#sql
+database/
+
 # OS
 .DS_Store
 Thumbs.db

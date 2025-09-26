@@ -16,30 +16,52 @@ router.get('/:sessionId/results', async (req, res) => {
     
     if (sessionError) throw sessionError;
     
-    // 获取评估结果
+    // 获取评估结果（包含评估器信息）
     const { data: results, error: resultsError } = await supabase
       .from('assessment_results')
-      .select('*')
+      .select(`
+        *,
+        evaluator_versions(
+          id, version,
+          evaluators(name)
+        )
+      `)
       .eq('session_id', sessionId)
       .order('created_at', { ascending: true });
     
     if (resultsError) throw resultsError;
     
     // 转换数据格式
-    const formattedResults = results.map(row => ({
-      question_text: row.question_text,
-      context: row.context,
-      ai_response: row.ai_response,
-      block_start: row.block_start,
-      block_end: row.block_end,
-      expected_answer: row.expected_answer,
-      evaluation_results: row.evaluation_results,
-      question_id: row.question_id,
-      question_type: row.question_type,
-      chatid: row.chatid,
-      block_type: 'answer',
-      block_subtype: '文本回复'
-    }));
+    const formattedResults = results.map(row => {
+      let evaluatorInfo = '默认评估器';
+      if (row.evaluator_versions) {
+        if (row.evaluator_versions.evaluators) {
+          evaluatorInfo = `${row.evaluator_versions.evaluators.name} ${row.evaluator_versions.version}`;
+        } else {
+          // 如果没有评估器信息，可能是数据关联问题
+          evaluatorInfo = `未知评估器 ${row.evaluator_versions.version}`;
+        }
+      } else if (row.evaluator_version_id) {
+        // 如果有 evaluator_version_id 但没有关联数据，显示 ID
+        evaluatorInfo = `评估器 ID: ${row.evaluator_version_id}`;
+      }
+      
+      return {
+        question_text: row.question_text,
+        context: row.context,
+        ai_response: row.ai_response,
+        block_start: row.block_start,
+        block_end: row.block_end,
+        expected_answer: row.expected_answer,
+        evaluation_results: row.evaluation_results,
+        question_id: row.question_id,
+        question_type: row.question_type,
+        chatid: row.chatid,
+        block_type: 'answer',
+        block_subtype: '文本回复',
+        evaluator_info: evaluatorInfo
+      };
+    });
     
     res.json({
       success: true,

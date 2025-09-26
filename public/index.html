@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>苏州科技馆数字人助手评估工具</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -181,9 +182,34 @@
 
             <!-- 评估器管理页面 -->
             <div id="evaluatorsPage" class="page-content" style="display: none;">
-                <div class="placeholder-content">
-                    <h2>🔧 评估器管理</h2>
-                    <p>功能开发中，敬请期待...</p>
+                <div class="evaluators-container">
+                    <div class="evaluators-header">
+                        <h2>🔧 评估器管理</h2>
+                        <button class="btn" onclick="createEvaluator()">➕ 新建评估器</button>
+                    </div>
+                    
+                    <div class="evaluators-list">
+                        <div id="evaluatorsTableContainer">
+                            <table class="evaluators-table">
+                                <thead>
+                                    <tr>
+                                        <th>评估器名称</th>
+                                        <th>版本</th>
+                                        <th>适用类型</th>
+                                        <th>启用状态</th>
+                                        <th>默认评估器</th>
+                                        <th>创建时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="evaluatorsTableBody">
+                                    <!-- 动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div id="evaluatorsStatus" class="status"></div>
                 </div>
             </div>
         </div>
@@ -263,5 +289,8 @@
     <script src="js/navigation.js"></script>
     <script src="js/session-modal.js"></script>
     <script src="js/statistics.js"></script>
+    <script src="js/confirm-modal.js"></script>
+    <script src="js/evaluator-manager.js"></script>
+    <script src="js/evaluator-modal.js"></script>
 </body>
 </html>

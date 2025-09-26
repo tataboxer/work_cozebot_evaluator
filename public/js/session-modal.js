@@ -20,7 +20,8 @@ const MODAL_COLUMN_MAPPING = {
     'question_type': '问题类型',
     'chatid': '对话ID',
     'block_type': '块类型',
-    'block_subtype': '块子类型'
+    'block_subtype': '块子类型',
+    'evaluator_info': '评估器'
 };
 
 // 显示会话详情
@@ -85,7 +86,7 @@ function renderModalTable(results) {
     
     // 构建完整列顺序
     const baseColumns = ['question_text', 'context', 'ai_response', 'block_start', 'block_end', 'expected_answer'];
-    const endColumns = ['question_id', 'question_type', 'chatid', 'block_type', 'block_subtype'];
+    const endColumns = ['question_id', 'question_type', 'chatid', 'block_type', 'block_subtype', 'evaluator_info'];
     const fullColumns = [...baseColumns, ...evaluationColumns, ...endColumns];
     
     // 渲染表头
@@ -213,6 +214,7 @@ function getColumnValue(row, column) {
     if (column === 'chatid') return row.chatid || '';
     if (column === 'block_type') return row.block_type || '';
     if (column === 'block_subtype') return row.block_subtype || '';
+    if (column === 'evaluator_info') return row.evaluator_info || '默认评估器';
     
     // 处理evaluation_results中的字段
     const evaluation = row.evaluation_results || {};
@@ -255,7 +257,8 @@ function getModalColumnWidth(columnName) {
         'question_type': 60,
         'chatid': 50,
         'block_type': 50,
-        'block_subtype': 80
+        'block_subtype': 80,
+        'evaluator_info': 120
     };
     return widthMap[columnName] || 150;
 }

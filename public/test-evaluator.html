@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>评估器测试</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        button { margin: 10px; padding: 10px; }
+        pre { background: #f5f5f5; padding: 10px; overflow: auto; }
+        .result { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>评估器管理逻辑测试</h1>
+    
+    <button onclick="testSelection()">测试评估器选择</button>
+    <button onclick="testPrompt()">测试提示词生成</button>
+    <button onclick="testEvaluation()">测试完整流程</button>
+    
+    <div id="results"></div>
+
+    <script>
+        function addResult(title, data) {
+            const div = document.createElement('div');
+            div.className = 'result';
+            div.innerHTML = `<h3>${title}</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            document.getElementById('results').appendChild(div);
+        }
+
+        function getHeaders() {
+            const accessKey = localStorage.getItem('access_key') || 'sgksk';
+            console.log('Using accessKey:', accessKey);
+            return {
+                'Content-Type': 'application/json',
+                'x-access-key': accessKey
+            };
+        }
+
+        async function testSelection() {
+            try {
+                const response = await fetch('/api/evaluators/test-selection', { headers: getHeaders() });
+                const data = await response.json();
+                addResult('评估器选择测试', data);
+            } catch (error) {
+                addResult('评估器选择测试 - 错误', { error: error.message });
+            }
+        }
+
+        async function testPrompt() {
+            try {
+                const response = await fetch('/api/evaluators/test-prompt', {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({
+                        evaluatorVersionId: 1,
+                        question: "门票多少钱？",
+                        answer: "成人票30元，学生票20元",
+                        expectedAnswer: "成人票30元，学生票20元"
+                    })
+                });
+                const data = await response.json();
+                addResult('提示词生成测试', data);
+            } catch (error) {
+                addResult('提示词生成测试 - 错误', { error: error.message });
+            }
+        }
+
+        async function testEvaluation() {
+            try {
+                const response = await fetch('/api/evaluators/test-evaluation', {
+                    method: 'POST',
+                    headers: getHeaders()
+                });
+                const data = await response.json();
+                addResult('完整流程测试', data);
+            } catch (error) {
+                addResult('完整流程测试 - 错误', { error: error.message });
+            }
+        }
+    </script>
+</body>
+</html>

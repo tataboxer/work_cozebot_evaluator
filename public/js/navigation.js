@@ -110,7 +110,7 @@ async function loadSessions(page = 1) {
                 <td>${session.first_token_min_duration ? session.first_token_min_duration.toFixed(1) + 's' : '-'}</td>
                 <td>${session.first_token_max_duration ? session.first_token_max_duration.toFixed(1) + 's' : '-'}</td>
                 <td>${session.avg_block_duration ? session.avg_block_duration.toFixed(1) + 's' : '-'}</td>
-                <td>${session.config?.ip || '-'} / ${session.config?.model || '-'}</td>
+                <td>${session.config?.ip || '-'}</td>
                 <td>
                     <button class="btn-small" onclick="viewSessionDetail('${session.session_id}')">查看</button>
                     <button class="btn-small" onclick="deleteSession('${session.session_id}')" style="background: #dc3545; margin-left: 5px;">删除</button>

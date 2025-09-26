@@ -122,6 +122,8 @@ app.use('/api', verifyAccess);
 
 // 需要权限的API路由
 app.use('/api', require('./routes/run-assessment'));
+app.use('/api/evaluators', require('./routes/evaluators'));
+app.use('/api/evaluators', require('./routes/evaluator-test'));
 
 app.use('/api/sessions', require('./routes/sessions'));
 app.use('/api/sessions', require('./routes/session-details'));

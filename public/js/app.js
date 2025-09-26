@@ -24,7 +24,8 @@ class OptimizedAssessmentApp {
             '专业度': '专业度',
             '专业度_理由': '专业度理由',
             '语气合理': '语气合理',
-            '语气合理_理由': '语气合理理由'
+            '语气合理_理由': '语气合理理由',
+            'evaluator_info': '评估器'
         };
         
         // 检查访问权限
@@ -425,11 +426,12 @@ class OptimizedAssessmentApp {
         const columnOrder = [
             'question_text', 'context', 'block_result', 'block_start', 'block_end', 'expected_answer',
             '准确率', '准确率_理由', '专业度', '专业度_理由', '语气合理', '语气合理_理由',
-            'question_id', 'question_type', 'chatid', 'block_type', 'block_subtype'
+            'question_id', 'question_type', 'chatid', 'block_type', 'block_subtype', 'evaluator_info'
         ];
         
-        // 获取所有列，按顺序排列
-        const allColumns = Object.keys(data[0]);
+        // 获取所有列，按顺序排列，排除不需要显示的列
+        const excludeColumns = ['evaluator_version_id'];
+        const allColumns = Object.keys(data[0]).filter(col => !excludeColumns.includes(col));
         const orderedColumns = columnOrder.filter(col => allColumns.includes(col));
         const remainingColumns = allColumns.filter(col => !columnOrder.includes(col));
         const columns = [...orderedColumns, ...remainingColumns];
@@ -533,6 +535,7 @@ class OptimizedAssessmentApp {
             'chatid': 50,
             'block_type': 50,
             'block_subtype': 80,
+            'evaluator_info': 120
         };
         return widthMap[columnName] || 150;
     }
@@ -611,11 +614,12 @@ class OptimizedAssessmentApp {
             'question_text', 'context', 'block_result', 'block_start', 'block_end', 'expected_answer',
             '准确率', '准确率_理由', '专业度', '专业度_理由', 
             '语气合理', '语气合理_理由',
-            'question_id', 'question_type', 'chatid', 'block_type', 'block_subtype'
+            'question_id', 'question_type', 'chatid', 'block_type', 'block_subtype', 'evaluator_info'
         ];
         
         this.csvTableBody.innerHTML = data.slice(0, 100).map(row => {
-            const allColumns = Object.keys(row);
+            const excludeColumns = ['evaluator_version_id'];
+            const allColumns = Object.keys(row).filter(col => !excludeColumns.includes(col));
             const orderedColumns = columnOrder.filter(col => allColumns.includes(col));
             const remainingColumns = allColumns.filter(col => !columnOrder.includes(col));
             const columns = [...orderedColumns, ...remainingColumns];
