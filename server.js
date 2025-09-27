@@ -127,6 +127,7 @@ app.use('/api/evaluators', require('./routes/evaluator-test'));
 
 app.use('/api/sessions', require('./routes/sessions'));
 app.use('/api/sessions', require('./routes/session-details'));
+app.use('/api/question-search', require('./routes/question-search'));
 app.use('/api/statistics', require('./routes/statistics'));
 
 

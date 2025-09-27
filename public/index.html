@@ -113,8 +113,16 @@
 
             <!-- 记录查询页面 -->
             <div id="recordsPage" class="page-content" style="display: none;">
-                <div class="records-container">
-                    <div class="search-filters">
+                <!-- 子标签页导航 -->
+                <div class="sub-navigation">
+                    <button class="sub-nav-btn active" onclick="showRecordsTab('sessions')">会话记录</button>
+                    <button class="sub-nav-btn" onclick="showRecordsTab('questions')">问题明细查询</button>
+                </div>
+
+                <!-- 会话记录标签页 -->
+                <div id="sessionsTab" class="sub-tab-content">
+                    <div class="records-container">
+                        <div class="search-filters">
                         <input type="date" id="startDate" placeholder="开始日期">
                         <input type="date" id="endDate" placeholder="结束日期">
                         <input type="text" id="sessionNameFilter" placeholder="会话名称">
@@ -154,10 +162,52 @@
                         </div>
                     </div>
 
-                    <div class="pagination">
-                        <button onclick="prevPage()">上一页</button>
-                        <span id="pageInfo">第 1 页，共 1 页</span>
-                        <button onclick="nextPage()">下一页</button>
+                        <div class="pagination">
+                            <button onclick="prevPage()">上一页</button>
+                            <span id="pageInfo">第 1 页，共 1 页</span>
+                            <button onclick="nextPage()">下一页</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 问题明细标签页 -->
+                <div id="questionsTab" class="sub-tab-content" style="display: none;">
+                    <div class="question-search-container">
+                        <div class="search-filters">
+                            <input type="text" id="questionSearchInput" placeholder="输入问题内容进行模糊匹配">
+                            <input type="date" id="questionStartDate" placeholder="开始日期">
+                            <input type="date" id="questionEndDate" placeholder="结束日期">
+                            <select id="questionPageSizeSelect" onchange="changeQuestionPageSize()">
+                                <option value="20" selected>每页 20 条</option>
+                                <option value="50">每页 50 条</option>
+                                <option value="100">每页 100 条</option>
+                            </select>
+                            <button class="btn-small" onclick="searchQuestions()">🔍 搜索</button>
+                            <button class="btn-small" onclick="resetQuestionSearch()">🔄 重置</button>
+                        </div>
+
+                        <div class="results-summary">
+                            <span id="questionResultsCount">共找到 0 条记录</span>
+                        </div>
+
+                        <div class="questions-list">
+                            <div class="table-container">
+                                <table class="questions-table">
+                                    <thead id="questionsTableHead">
+                                        <!-- 动态生成 -->
+                                    </thead>
+                                    <tbody id="questionsTableBody">
+                                        <!-- 动态生成 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="pagination">
+                            <button onclick="prevQuestionPage()">上一页</button>
+                            <span id="questionPageInfo">第 1 页，共 1 页</span>
+                            <button onclick="nextQuestionPage()">下一页</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -292,5 +342,6 @@
     <script src="js/confirm-modal.js"></script>
     <script src="js/evaluator-manager.js"></script>
     <script src="js/evaluator-modal.js"></script>
+    <script src="js/question-search.js"></script>
 </body>
 </html>
