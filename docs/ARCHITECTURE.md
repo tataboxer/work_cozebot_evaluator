@@ -19,6 +19,9 @@
 │ ┌─────────────┐ │    │ │ 数据库      │ │    │ │ (Token)     │ │
 │ │ 评估器管理  │ │    │ └─────────────┘ │    │ └─────────────┘ │
 │ └─────────────┘ │    │                 │    │                 │
+│ ┌─────────────┐ │    │                 │    │                 │
+│ │ 问题搜索页  │ │    │                 │    │                 │
+│ └─────────────┘ │    │                 │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
@@ -87,6 +90,8 @@ lib/
 ├── token-manager.js    # Token管理
 ├── coze-client.js      # Coze API客户端
 ├── llm-client.js       # LLM API客户端
+├── evaluator-manager.js # 评估器管理模块
+├── prompt-builder.js   # 提示词构建器
 └── assessment-storage.js # 数据存储逻辑
 ```
 
@@ -94,6 +99,8 @@ lib/
 - 核心业务逻辑
 - 统一统计计算（支持Node.js和浏览器环境）
 - 外部API集成
+- 评估器动态选择和管理
+- 提示词动态生成
 - 数据处理算法
 - 业务规则实现
 
@@ -101,12 +108,16 @@ lib/
 ```
 Supabase (PostgreSQL)   # 云端数据库
 ├── assessment_sessions # 会话表 (JSONB字段)
-└── assessment_results  # 结果表 (JSONB字段)
+├── assessment_results  # 结果表 (JSONB字段)
+├── evaluators         # 评估器表
+├── evaluator_versions # 评估器版本表 (JSONB配置)
+└── access_logs        # 访问日志表
 ```
 
 **职责**:
 - 云端数据持久化和实时同步
 - PostgreSQL JSONB高效查询
+- 评估器配置和版本管理
 - 自动备份、扩展和恢复
 - 行级安全策略 (RLS)
 - 内置API生成和实时订阅
@@ -140,6 +151,30 @@ app.js → data-manager.js → simple-list-renderer.js
 navigation.js → session-modal.js
 ```
 
+#### evaluator-manager.js - 评估器管理模块
+```javascript
+// 核心功能
+- 评估器列表管理
+- 评估器创建和编辑
+- 版本历史管理
+- 状态切换控制
+
+// 依赖关系
+evaluator-manager.js → evaluator-modal.js
+```
+
+#### question-search.js - 问题搜索模块
+```javascript
+// 核心功能
+- 问题内容全文搜索
+- 时间范围筛选
+- 分页浏览
+- 动态表格渲染
+
+// 依赖关系
+question-search.js → simple-list-renderer.js
+```
+
 #### data-manager.js - 数据管理模块
 ```javascript
 // 核心功能
@@ -159,23 +194,49 @@ class DataManager {
 
 ### 后端模块架构
 
-#### token-manager.js - Token管理
+#### evaluator-manager.js - 评估器管理
 ```javascript
-// 设计模式: 单例模式
-class TokenManager {
-  static instance = null;
-  
-  static getInstance() {
-    if (!this.instance) {
-      this.instance = new TokenManager();
-    }
-    return this.instance;
+// 设计模式: 单例模式 + 缓存策略
+class EvaluatorManager {
+  constructor() {
+    this.cache = new Map();
+    this.cacheExpiry = 5 * 60 * 1000; // 5分钟缓存
   }
   
-  async getToken() {
-    // Token获取逻辑
-    // 缓存管理
-    // 自动刷新
+  async getActiveEvaluators() {
+    // 获取活跃评估器（带缓存）
+  }
+  
+  async selectEvaluators(questions) {
+    // 根据问题类型动态选择评估器
+    // 1. 优先使用专门的评估器（question_type匹配）
+    // 2. 如果没有专门的评估器，使用通用评估器
+    // 3. 如果都没有，使用默认评估器
+  }
+  
+  async getEvaluatorByVersionId(versionId) {
+    // 根据版本ID获取评估器信息（带缓存）
+  }
+}
+```
+
+#### prompt-builder.js - 提示词构建器
+```javascript
+// 设计模式: 静态工厂模式
+class PromptBuilder {
+  static buildPrompt(evaluatorVersion, question, answer, context, expectedAnswer) {
+    // 根据评估器配置动态生成提示词
+    // 处理上下文信息
+    // 构建评估维度说明
+    // 生成JSON输出格式
+  }
+  
+  static validateEvaluatorVersion(evaluatorVersion) {
+    // 验证评估器版本配置有效性
+  }
+  
+  static parseEvaluationResult(result, expectedDimensions) {
+    // 解析LLM返回的评估结果
   }
 }
 ```
@@ -278,32 +339,41 @@ CozeClient.processQuestions()
 
 ### 2. 评估执行流程
 ```
-接收处理结果 → 创建会话 → 调用LLM API → 
-并发评估 → 保存结果 → 生成统计 → 返回结果
+接收处理结果 → 分析问题类型 → 选择评估器 → 生成提示词 → 
+调用LLM API → 并发评估 → 保存结果 → 生成统计 → 返回结果
 ```
 
 **详细流程**:
 ```javascript
-// 1. 会话创建
-AssessmentStorage.createSession()
-├── 生成UUID
-├── 保存配置信息
-└── 初始化统计数据
+// 1. 评估器选择
+EvaluatorManager.selectEvaluators(questions)
+├── 统计问题类型分布
+├── 匹配专用评估器
+├── 回退到默认评估器
+└── 返回选择结果
 
-// 2. LLM评估
+// 2. 提示词生成
+PromptBuilder.buildPrompt()
+├── 解析评估器配置
+├── 构建上下文信息
+├── 生成评估维度说明
+└── 格式化输出模板
+
+// 3. LLM评估
 LLMClient.assessQuestions()
 ├── 并发控制 (15线程)
 ├── 评估结果解析
 ├── 错误处理
 └── 进度更新
 
-// 3. 数据存储
+// 4. 数据存储
 AssessmentStorage.saveResults()
 ├── 批量插入结果
+├── 关联评估器版本
 ├── 更新会话统计
 └── 事务处理
 
-// 4. 统计计算
+// 5. 统计计算
 calculateEvaluationSummary()
 ├── 平均分计算
 ├── 性能统计
@@ -314,6 +384,53 @@ calculateEvaluationSummary()
 ```
 查询请求 → 参数验证 → 数据库查询 → 
 结果分页 → 数据格式化 → 返回响应
+```
+
+### 4. 问题搜索流程
+```
+搜索请求 → 构建查询条件 → 全文搜索 → 
+时间筛选 → 分页处理 → 返回结果
+```
+
+**详细流程**:
+```javascript
+// 1. 查询构建
+supabase.from('assessment_results')
+├── 问题内容模糊匹配 (ILIKE)
+├── 时间范围筛选 (GTE/LTE)
+├── 关联会话信息 (JOIN)
+└── 排序和分页
+
+// 2. 结果处理
+QuestionSearch.renderTable()
+├── 动态解析评估维度
+├── 构建表头结构
+├── 渲染表格内容
+└── 应用样式和格式化
+```
+
+### 5. 评估器管理流程
+```
+管理请求 → 权限验证 → 业务逻辑处理 → 
+数据库操作 → 缓存更新 → 返回结果
+```
+
+**详细流程**:
+```javascript
+// 1. 评估器创建
+EvaluatorRouter.createEvaluator()
+├── 验证必填字段
+├── 检查权重总和
+├── 处理默认评估器逻辑
+├── 创建评估器和版本
+└── 清除缓存
+
+// 2. 版本管理
+EvaluatorRouter.createVersion()
+├── 生成新版本号
+├── 标记旧版本为非最新
+├── 插入新版本记录
+└── 更新缓存
 ```
 
 ## 并发处理设计

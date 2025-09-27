@@ -240,6 +240,277 @@ SSE日志流（通过URL参数认证）
 - Content-Disposition: `attachment; filename="session_export.csv"`
 - BOM支持中文显示
 
+## 评估器管理接口
+
+### GET /api/evaluators
+获取评估器列表
+
+**响应**
+```json
+{
+  "evaluators": [
+    {
+      "id": 1,
+      "name": "默认评估器",
+      "description": "通用评估器",
+      "question_type": null,
+      "is_default": true,
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "evaluator_versions": [
+        {
+          "id": 1,
+          "version": "v1",
+          "is_latest": true,
+          "created_at": "2025-01-01T00:00:00.000Z"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### POST /api/evaluators
+创建新评估器
+
+**请求**
+```json
+{
+  "name": "门票咨询评估器",
+  "description": "专门用于门票相关问题的评估",
+  "question_type": "ticket",
+  "is_default": false,
+  "assistant_name": "苏州科技馆智能助手",
+  "assistant_description": "为游客提供科技馆相关信息服务",
+  "criteria": [
+    {
+      "name": "准确率",
+      "description": "回答内容的准确性和正确性",
+      "weight": 40
+    },
+    {
+      "name": "专业度",
+      "description": "回答的专业性和权威性",
+      "weight": 30
+    },
+    {
+      "name": "语气合理",
+      "description": "回答语气的友好性和合理性",
+      "weight": 30
+    }
+  ],
+  "change_notes": "初始版本"
+}
+```
+
+**响应**
+```json
+{
+  "evaluator": {
+    "id": 2,
+    "name": "门票咨询评估器",
+    "description": "专门用于门票相关问题的评估",
+    "question_type": "ticket",
+    "is_default": false,
+    "is_active": true
+  },
+  "version": {
+    "id": 2,
+    "evaluator_id": 2,
+    "version": "v1",
+    "is_latest": true,
+    "change_notes": "初始版本"
+  }
+}
+```
+
+### PUT /api/evaluators/:id
+更新评估器基本信息
+
+**请求**
+```json
+{
+  "name": "更新后的评估器名称",
+  "description": "更新后的描述",
+  "question_type": "exhibition",
+  "is_default": false,
+  "is_active": true
+}
+```
+
+### GET /api/evaluators/:id/versions
+获取评估器版本历史
+
+**响应**
+```json
+{
+  "versions": [
+    {
+      "id": 2,
+      "evaluator_id": 1,
+      "version": "v2",
+      "is_latest": true,
+      "evaluation_criteria": {
+        "assistant_name": "苏州科技馆智能助手",
+        "assistant_description": "为游客提供科技馆相关信息服务",
+        "criteria": [
+          {
+            "name": "准确率",
+            "description": "回答内容的准确性和正确性",
+            "weight": 40
+          }
+        ]
+      },
+      "change_notes": "优化评估标准",
+      "created_at": "2025-01-02T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+### POST /api/evaluators/:id/versions
+创建新版本
+
+**请求**
+```json
+{
+  "assistant_name": "苏州科技馆智能助手",
+  "assistant_description": "为游客提供科技馆相关信息服务",
+  "criteria": [
+    {
+      "name": "准确率",
+      "description": "回答内容的准确性和正确性",
+      "weight": 50
+    },
+    {
+      "name": "专业度",
+      "description": "回答的专业性和权威性",
+      "weight": 50
+    }
+  ],
+  "change_notes": "调整权重分配"
+}
+```
+
+### DELETE /api/evaluators/:id
+删除评估器（默认评估器不能删除）
+
+**响应**
+```json
+{
+  "success": true
+}
+```
+
+## 评估器测试接口
+
+### GET /api/evaluators/test-selection
+测试评估器选择逻辑
+
+**响应**
+```json
+{
+  "success": true,
+  "message": "评估器选择测试完成",
+  "data": {
+    "questionStats": {
+      "ticket": 2,
+      "exhibition": 1,
+      "general": 2
+    },
+    "totalQuestions": 5,
+    "selection": {
+      "ticket": {
+        "evaluatorName": "门票咨询评估器",
+        "evaluatorId": 2,
+        "version": "v1",
+        "versionId": 2,
+        "questionCount": 2,
+        "isDefault": false
+      }
+    }
+  }
+}
+```
+
+### POST /api/evaluators/test-prompt
+测试提示词生成
+
+**请求**
+```json
+{
+  "evaluatorVersionId": 1,
+  "question": "门票多少钱？",
+  "answer": "成人票30元，学生票20元",
+  "expectedAnswer": "成人票30元，学生票20元"
+}
+```
+
+**响应**
+```json
+{
+  "success": true,
+  "message": "提示词生成测试完成",
+  "data": {
+    "evaluator": {
+      "name": "默认评估器",
+      "version": "v1",
+      "assistantName": "苏州科技馆智能助手"
+    },
+    "prompt": "你是一个专业的AI评估专家...",
+    "promptLength": 1024,
+    "dimensions": ["准确率", "专业度", "语气合理"]
+  }
+}
+```
+
+## 问题搜索接口
+
+### GET /api/question-search
+搜索问题明细
+
+**查询参数**
+- `question`: 问题内容关键词
+- `startDate`: 开始日期 (YYYY-MM-DD)
+- `endDate`: 结束日期 (YYYY-MM-DD)
+- `page`: 页码 (默认: 1)
+- `limit`: 每页数量 (默认: 20)
+
+**响应**
+```json
+{
+  "results": [
+    {
+      "id": 1,
+      "created_at": "2025-01-01T10:00:00.000Z",
+      "question_text": "门票多少钱？",
+      "context": [{"role": "user", "content": "你好"}],
+      "ai_response": "成人票30元，学生票20元",
+      "expected_answer": "成人票30元，学生票20元",
+      "evaluation_results": {
+        "accuracy": {"score": 85, "reason": "回答准确"},
+        "professionalism": {"score": 90, "reason": "表达专业"},
+        "tone_reasonableness": {"score": 88, "reason": "语气友好"}
+      },
+      "chatid": "chat_12345",
+      "question_id": "Q001",
+      "question_type": "ticket",
+      "block_start": 2.5,
+      "block_end": 15.8,
+      "assessment_sessions": {
+        "session_name": "测试会话"
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 150,
+    "totalPages": 8
+  }
+}
+```
+
 ## 错误响应
 
 所有接口在出错时返回统一格式：
