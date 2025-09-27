@@ -2,13 +2,14 @@ let statisticsChart = null;
 
 // 初始化统计分析页面
 function initStatistics() {
-    // 设置默认日期为当前自然月
+    // 设置默认日期为最近一个月（包含当天）
     const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const endDate = new Date(now); // 当天
+    const startDate = new Date(now);
+    startDate.setDate(now.getDate() - 30); // 往前推30天
     
-    document.getElementById('statsStartDate').value = firstDay.toISOString().split('T')[0];
-    document.getElementById('statsEndDate').value = lastDay.toISOString().split('T')[0];
+    document.getElementById('statsStartDate').value = startDate.toISOString().split('T')[0];
+    document.getElementById('statsEndDate').value = endDate.toISOString().split('T')[0];
     
     // 自动加载当前月数据
     loadStatistics();

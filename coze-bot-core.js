@@ -107,9 +107,9 @@ function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
       console.log(`🎯 当前问题: ${content}`);
       
       // 打印上下文内容用于验证
-      console.log(`🔍 上下文内容:`);
+      // console.log(`🔍 上下文内容:`);
       contextMessages.forEach((msg, index) => {
-        console.log(`  ${index + 1}. [${msg.role}] ${msg.content || msg.content_type || 'No content'}`);
+        // console.log(`  ${index + 1}. [${msg.role}] ${msg.content || msg.content_type || 'No content'}`);
       });
     } else {
       // 简单模式 - 只传当前问题
@@ -170,8 +170,8 @@ function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
         console.error(`请求失败，状态码: ${res.statusCode}`);
         return;
       }
-      console.log(`流式响应状态码: ${res.statusCode} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
-      console.log(`流式响应头: ${JSON.stringify(res.headers)} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
+      // console.log(`流式响应状态码: ${res.statusCode} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
+      // console.log(`流式响应头: ${JSON.stringify(res.headers)} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
 
     let eventCount = 0;
     let chatId = null; // 用于存储chat_id
@@ -188,8 +188,6 @@ function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
 
     res.on('data', (chunk) => {
       const data = chunk.toString();
-      console.log(`\n--- 流式数据块 ${++eventCount} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s) ---`);
-      
       // 解析Server-Sent Events格式
       const lines = data.split('\n');
       let currentEvent = '';
@@ -197,24 +195,20 @@ function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
       lines.forEach(line => {
         if (line.startsWith('event:')) {
           currentEvent = line.substring(6).trim();
-          console.log(`📡 事件类型: ${currentEvent} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
         } else if (line.startsWith('data:')) {
           const dataContent = line.substring(5).trim();
           
           if (dataContent === '[DONE]') {
-            console.log(`🏁 流式响应结束 (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
             return;
           }
           
           try {
             const eventData = safeJsonParse(dataContent);
             if (!eventData) return;
-            console.log(`📦 事件数据: ${JSON.stringify(eventData, null, 2)} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
             
             // 获取chat_id（通常在第一个事件数据中）
             if (eventData.id && !chatId) {
               chatId = eventData.id;
-              console.log(`🆔 获取到Chat ID: ${chatId} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
             }
             
             // 记录每个消息ID的首token时间（相对于当前问题开始时间）
@@ -241,7 +235,6 @@ function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
 
               if (eventData.content) {
                 messageContents.set(eventData.id, eventData.content);
-                console.log(`💬 完整回答: ${eventData.content} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
               }
 
               if (eventData.type) {
@@ -266,20 +259,16 @@ function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
             }
             
           } catch (e) {
-            console.log(`📄 事件数据(原始): ${dataContent} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
+            // 忽略解析错误
           }
         }
       });
     });
 
     res.on('end', () => {
-      console.log(`\n✅ Coze Bot调用完成！ (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
-
       // 收集分析结果
       const results = [];
       let segmentCount = 0;
-
-      console.log(`🆔 Chat ID: ${chatId || '未获取到'}`);
 
       // 按照消息ID的顺序输出结果
       const orderedIds = Array.from(firstTokenTimes.keys());
@@ -288,20 +277,8 @@ function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
         if (type !== 'verbose') {
           segmentCount++;
           const blockEndTime = messageEndTimes.get(id) || firstTokenTimes.get(id);
-          console.log(`\n--- 分段 ${segmentCount} ---`);
-          console.log(`首token时间: ${firstTokenTimes.get(id)}秒`);
-          console.log(`结束时间: ${blockEndTime}秒`);
-          console.log(`消息类型: ${type}`);
 
           const subType = messageSubTypes.get(id);
-          if (subType) {
-            console.log(`消息子类型: ${subType}`);
-          } else if (type === 'answer') {
-            console.log(`消息子类型: 文本回复`);
-          }
-
-          console.log(`内容长度: ${(messageContents.get(id) || '').length}字符`);
-          console.log(`内容: ${messageContents.get(id) || '无内容'}`);
 
           results.push({
             block_id: segmentCount,
@@ -314,7 +291,12 @@ function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
         }
       });
 
-      console.log(`\n总计分段数: ${segmentCount} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
+      // 清理Map以释放内存
+      firstTokenTimes.clear();
+      messageContents.clear();
+      messageTypes.clear();
+      messageSubTypes.clear();
+      messageEndTimes.clear();
 
       // 返回结果
       resolve({ segments: results, chatId });
