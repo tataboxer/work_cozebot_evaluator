@@ -129,6 +129,8 @@ app.use('/api/sessions', require('./routes/sessions'));
 app.use('/api/sessions', require('./routes/session-details'));
 app.use('/api/question-search', require('./routes/question-search'));
 app.use('/api/statistics', require('./routes/statistics'));
+app.use('/api/coze-bot-ids', require('./routes/coze-bot-ids'));
+app.use('/api/coze-bot-id', require('./routes/coze-bot-id'));
 
 
 // SSE日志功能 (保留)

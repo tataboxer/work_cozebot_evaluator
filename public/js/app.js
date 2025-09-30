@@ -35,6 +35,9 @@ class OptimizedAssessmentApp {
         this.initElements();
         this.initEventListeners();
         
+        // 初始化扣子ID显示
+        this.loadCurrentCozeBotId();
+        
         // 异步初始化非关键功能
         setTimeout(() => {
             this.waitForDependencies();
@@ -173,6 +176,11 @@ class OptimizedAssessmentApp {
         this.excelFileInput = document.getElementById('excelFile');
         this.fileName = document.getElementById('fileName');
         
+        // 扣子ID元素
+        this.currentCozeBotId = document.getElementById('currentCozeBotId');
+        this.modifyCozeBotIdBtn = document.getElementById('modifyCozeBotIdBtn');
+        this.cozeBotIdStatus = document.getElementById('cozeBotIdStatus');
+        
         // 状态显示
         this.excelStatus = document.getElementById('excelStatus');
         this.assessmentStatus = document.getElementById('assessmentStatus');
@@ -219,6 +227,11 @@ class OptimizedAssessmentApp {
         }
         if (this.questionTypeFilter) {
             this.questionTypeFilter.addEventListener('change', () => this.filterData());
+        }
+        
+        // 扣子ID修改按钮
+        if (this.modifyCozeBotIdBtn) {
+            this.modifyCozeBotIdBtn.addEventListener('click', () => this.showCozeBotIdModal());
         }
     }
     
@@ -863,6 +876,102 @@ class OptimizedAssessmentApp {
         // 初始化日志面板事件
         this.initLogPanelEvents();
     }
+    
+    // 扣子ID管理方法
+    async loadCurrentCozeBotId() {
+        try {
+            const response = await fetch('/api/coze-bot-id', {
+                headers: {
+                    'X-Access-Key': localStorage.getItem('access_key')
+                }
+            });
+            const result = await response.json();
+            
+            if (result.success && this.currentCozeBotId) {
+                this.currentCozeBotId.textContent = result.cozeBotId;
+            }
+        } catch (error) {
+            console.error('获取扣子ID失败:', error);
+            if (this.currentCozeBotId) {
+                this.currentCozeBotId.textContent = '加载失败';
+            }
+        }
+    }
+    
+    showCozeBotIdModal() {
+        const modal = document.getElementById('cozeBotIdModal');
+        const input = document.getElementById('newCozeBotIdInput');
+        const error = document.getElementById('cozeBotIdError');
+        
+        if (modal && input) {
+            input.value = this.currentCozeBotId.textContent;
+            error.style.display = 'none';
+            modal.style.display = 'flex';
+            setTimeout(() => input.focus(), 100);
+        }
+    }
+    
+    async confirmCozeBotIdChange() {
+        const input = document.getElementById('newCozeBotIdInput');
+        const error = document.getElementById('cozeBotIdError');
+        const confirmBtn = document.getElementById('confirmCozeBotIdBtn');
+        
+        if (!input || !input.value.trim()) {
+            this.showCozeBotIdError('请输入扣子ID');
+            return;
+        }
+        
+        const newId = input.value.trim();
+        
+        if (!/^\d+$/.test(newId)) {
+            this.showCozeBotIdError('扣子ID必须为纯数字');
+            return;
+        }
+        
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = '更新中...';
+        
+        try {
+            const response = await fetch('/api/coze-bot-id', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Access-Key': localStorage.getItem('access_key')
+                },
+                body: JSON.stringify({ cozeBotId: newId })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.currentCozeBotId.textContent = result.cozeBotId;
+                this.closeCozeBotIdModal();
+                this.showStatus(this.cozeBotIdStatus, 'success', `✅ 扣子ID已更新为: ${result.cozeBotId}`);
+            } else {
+                this.showCozeBotIdError(result.message || '更新失败');
+            }
+        } catch (error) {
+            this.showCozeBotIdError('网络错误，请重试');
+        } finally {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = '确认';
+        }
+    }
+    
+    showCozeBotIdError(message) {
+        const error = document.getElementById('cozeBotIdError');
+        if (error) {
+            error.textContent = message;
+            error.style.display = 'block';
+        }
+    }
+    
+    closeCozeBotIdModal() {
+        const modal = document.getElementById('cozeBotIdModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
 
 }
 
@@ -870,3 +979,16 @@ class OptimizedAssessmentApp {
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new OptimizedAssessmentApp();
 });
+
+// 全局函数供 HTML 调用
+function closeCozeBotIdModal() {
+    if (window.app) {
+        window.app.closeCozeBotIdModal();
+    }
+}
+
+function confirmCozeBotIdChange() {
+    if (window.app) {
+        window.app.confirmCozeBotIdChange();
+    }
+}

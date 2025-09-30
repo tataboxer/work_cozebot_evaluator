@@ -71,6 +71,7 @@ public/
 ### 2. 应用层 (Application Layer)
 ```
 routes/
+├── coze-bot-id.js      # 扣子ID管理路由
 ├── process-excel.js    # Excel处理路由
 ├── run-assessment.js   # 评估执行路由
 ├── sessions.js         # 会话管理路由

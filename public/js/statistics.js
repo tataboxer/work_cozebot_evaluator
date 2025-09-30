@@ -11,6 +11,9 @@ function initStatistics() {
     document.getElementById('statsStartDate').value = startDate.toISOString().split('T')[0];
     document.getElementById('statsEndDate').value = endDate.toISOString().split('T')[0];
     
+    // 加载扣子ID选项
+    loadCozeBotIds();
+    
     // 自动加载当前月数据
     loadStatistics();
 }
@@ -19,6 +22,7 @@ function initStatistics() {
 async function loadStatistics() {
     const startDate = document.getElementById('statsStartDate').value;
     const endDate = document.getElementById('statsEndDate').value;
+    const cozeBotId = document.getElementById('statsCozeBotIdFilter').value;
     const statusDiv = document.getElementById('statisticsStatus');
     
     if (!startDate || !endDate) {
@@ -39,7 +43,15 @@ async function loadStatistics() {
             throw new Error('未找到访问密钥，请刷新页面重新验证');
         }
         
-        const response = await fetch(`/api/statistics/daily-stats?startDate=${startDate}&endDate=${endDate}`, {
+        const params = new URLSearchParams({
+            startDate,
+            endDate
+        });
+        if (cozeBotId) {
+            params.append('cozeBotId', cozeBotId);
+        }
+        
+        const response = await fetch(`/api/statistics/daily-stats?${params}`, {
             headers: {
                 'x-access-key': accessKey
             }

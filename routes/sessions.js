@@ -5,7 +5,7 @@ const router = express.Router();
 // 获取会话列表
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, limit = 10, startDate, endDate, sessionName } = req.query;
+    const { page = 1, limit = 10, startDate, endDate, sessionName, cozeBotId } = req.query;
     
     let query = supabase
       .from('assessment_sessions')
@@ -23,6 +23,11 @@ router.get('/', async (req, res) => {
     // 会话名称筛选
     if (sessionName) {
       query = query.ilike('session_name', `%${sessionName}%`);
+    }
+    
+    // 扣子ID筛选
+    if (cozeBotId) {
+      query = query.eq('coze_bot_id', cozeBotId);
     }
 
     // 获取总数

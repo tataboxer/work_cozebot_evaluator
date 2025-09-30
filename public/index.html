@@ -40,9 +40,23 @@
             <!-- 数据处理页面 -->
             <div id="dataProcessingPage" class="page-content">
                 <div class="workflow">
-                    <!-- 步骤1: 上传Excel -->
+                    <!-- 步骤1: 选择扣子ID -->
                     <div class="step-card">
                         <div class="step-number">1</div>
+                        <h3>选择扣子ID</h3>
+                        <p>选择要使用的Coze数字人助手ID</p>
+                        <div class="coze-bot-id-section">
+                            <div class="current-bot-id">
+                                🤖 当前扣子ID: <span id="currentCozeBotId">加载中...</span>
+                            </div>
+                            <button id="modifyCozeBotIdBtn" class="btn-small">修改扣子ID</button>
+                        </div>
+                        <div id="cozeBotIdStatus" class="status"></div>
+                    </div>
+
+                    <!-- 步骤2: 上传Excel -->
+                    <div class="step-card">
+                        <div class="step-number">2</div>
                         <h3>上传测试问题集</h3>
                         <p>上传测试集（<a href="templates/test_set_example.xls" download>下载样例</a>），自动调用Coze Agent生成回复</p>
                         <div class="file-input">
@@ -60,12 +74,12 @@
                         </div>
                     </div>
 
-                    <!-- 步骤2: 执行评估 -->
+                    <!-- 步骤3: 执行评估 -->
                     <div class="step-card">
-                        <div class="step-number">2</div>
+                        <div class="step-number">3</div>
                         <h3>执行质量评估</h3>
                         <p>使用LLM对助手回复进行专业评估，生成详细的质量报告</p>
-                        <div id="assessmentFileName" style="margin: 10px 0 25px 0; color: #666;">请先完成第1步Excel处理</div>
+                        <div id="assessmentFileName" style="margin: 10px 0 25px 0; color: #666;">请先完成第2步Excel处理</div>
                         <button id="runAssessmentBtn" class="btn" disabled>开始评估</button>
                         <div id="assessmentStatus" class="status"></div>
                         <div class="progress-container">
@@ -126,6 +140,9 @@
                         <input type="date" id="startDate" placeholder="开始日期">
                         <input type="date" id="endDate" placeholder="结束日期">
                         <input type="text" id="sessionNameFilter" placeholder="会话名称">
+                        <select id="cozeBotIdFilter">
+                            <option value="">所有扣子ID</option>
+                        </select>
                         <select id="pageSizeSelect" onchange="changePageSize()">
                             <option value="10" selected>每页 10 条</option>
                             <option value="20">每页 20 条</option>
@@ -151,6 +168,7 @@
                                         <th>首Token最小</th>
                                         <th>首Token最高</th>
                                         <th>平均段时长</th>
+                                        <th>扣子ID</th>
                                         <th>配置信息</th>
                                         <th>操作</th>
                                     </tr>
@@ -220,6 +238,9 @@
                         <div class="date-filters">
                             <input type="date" id="statsStartDate" placeholder="开始日期">
                             <input type="date" id="statsEndDate" placeholder="结束日期">
+                            <select id="statsCozeBotIdFilter">
+                                <option value="">所有扣子ID</option>
+                            </select>
                             <button class="btn-small" onclick="loadStatistics()">📈 查询</button>
                         </div>
                     </div>
@@ -277,6 +298,25 @@
             <button class="close-log" id="closeLog">&times;</button>
         </div>
         <div class="log-content" id="logContent"></div>
+    </div>
+
+    <!-- 扣子ID修改弹窗 -->
+    <div class="coze-bot-id-modal" id="cozeBotIdModal" style="display: none;">
+        <div class="coze-modal-content">
+            <div class="modal-header">
+                <h3>🤖 修改扣子ID</h3>
+                <button class="close-modal" onclick="closeCozeBotIdModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>请输入新的扣子ID：</p>
+                <input type="text" id="newCozeBotIdInput" placeholder="请输入数字ID" class="coze-input">
+                <div id="cozeBotIdError" class="error-message" style="display: none;"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-small" onclick="closeCozeBotIdModal()">取消</button>
+                <button class="btn" id="confirmCozeBotIdBtn" onclick="confirmCozeBotIdChange()">确认</button>
+            </div>
+        </div>
     </div>
 
     <!-- 会话详情弹窗 -->

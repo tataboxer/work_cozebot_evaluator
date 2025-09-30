@@ -27,7 +27,7 @@ LOGIN_PASSWORD=your_encrypted_password
 
 # Coze API配置
 COZE_API_TOKEN=your_coze_api_token
-COZE_BOT_ID=your_bot_id
+COZE_BOT_ID=your_bot_id  # 可通过前端界面动态修改
 
 # LLM评估配置
 llm_url=https://ark.cn-beijing.volces.com/api/v3/
@@ -67,6 +67,7 @@ agent-assessment/
 │   ├── llm-client.js      # LLM API客户端
 │   └── assessment-storage.js # 数据库操作
 ├── routes/               # API路由
+│   ├── coze-bot-id.js     # 扣子ID管理
 │   ├── process-excel.js   # Excel处理
 │   ├── run-assessment.js  # 评估执行
 │   ├── sessions.js        # 会话管理

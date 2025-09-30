@@ -28,6 +28,7 @@ function showPage(pageId) {
     
     // 加载记录页面数据
     if (pageId === 'records') {
+        loadCozeBotIds();
         loadSessions();
     }
     
@@ -63,10 +64,12 @@ async function loadSessions(page = 1) {
         const startDate = document.getElementById('startDate')?.value;
         const endDate = document.getElementById('endDate')?.value;
         const sessionName = document.getElementById('sessionNameFilter')?.value;
+        const cozeBotId = document.getElementById('cozeBotIdFilter')?.value;
         
         if (startDate) params.append('startDate', startDate);
         if (endDate) params.append('endDate', endDate);
         if (sessionName) params.append('sessionName', sessionName);
+        if (cozeBotId) params.append('cozeBotId', cozeBotId);
         
         const response = await fetch(`/api/sessions?${params}`, {
             headers: {
@@ -88,7 +91,7 @@ async function loadSessions(page = 1) {
         tbody.innerHTML = '';
         
         if (!data.sessions || data.sessions.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="13" style="text-align: center; color: #666;">暂无数据</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="14" style="text-align: center; color: #666;">暂无数据</td></tr>';
             totalPages = 0;
             currentPage = 0;
             updatePaginationUI();
@@ -110,6 +113,7 @@ async function loadSessions(page = 1) {
                 <td>${session.first_token_min_duration ? session.first_token_min_duration.toFixed(1) + 's' : '-'}</td>
                 <td>${session.first_token_max_duration ? session.first_token_max_duration.toFixed(1) + 's' : '-'}</td>
                 <td>${session.avg_block_duration ? session.avg_block_duration.toFixed(1) + 's' : '-'}</td>
+                <td>${session.coze_bot_id || '-'}</td>
                 <td>${session.config?.ip || '-'}</td>
                 <td>
                     <div class="action-buttons">
@@ -267,5 +271,49 @@ async function batchDeleteSessions() {
     } catch (error) {
         console.error('批量删除失败:', error);
         alert('批量删除失败');
+    }
+}
+
+// 加载扣子ID选项
+async function loadCozeBotIds() {
+    try {
+        const accessKey = localStorage.getItem('access_key');
+        if (!accessKey) return;
+        
+        const response = await fetch('/api/coze-bot-ids', {
+            headers: { 'x-access-key': accessKey }
+        });
+        
+        if (!response.ok) return;
+        
+        const result = await response.json();
+        const botIds = result.data || [];
+        
+        // 更新会话记录页面的下拉框
+        const sessionFilter = document.getElementById('cozeBotIdFilter');
+        if (sessionFilter) {
+            sessionFilter.innerHTML = '<option value="">所有扣子ID</option>';
+            botIds.forEach(botId => {
+                const option = document.createElement('option');
+                option.value = botId;
+                option.textContent = botId;
+                sessionFilter.appendChild(option);
+            });
+        }
+        
+        // 更新统计分析页面的下拉框
+        const statsFilter = document.getElementById('statsCozeBotIdFilter');
+        if (statsFilter) {
+            statsFilter.innerHTML = '<option value="">所有扣子ID</option>';
+            botIds.forEach(botId => {
+                const option = document.createElement('option');
+                option.value = botId;
+                option.textContent = botId;
+                statsFilter.appendChild(option);
+            });
+        }
+        
+    } catch (error) {
+        console.error('加载扣子ID列表失败:', error);
     }
 }

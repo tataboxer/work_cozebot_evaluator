@@ -58,6 +58,7 @@ CREATE TABLE public.assessment_sessions (
   first_token_max_duration numeric,
   avg_block_duration numeric,
   user_ip character varying,
+  coze_bot_id character varying,
   CONSTRAINT assessment_sessions_pkey PRIMARY KEY (id)
 );
 
@@ -99,6 +100,7 @@ CREATE TABLE public.evaluators (
 CREATE INDEX idx_sessions_created_at ON assessment_sessions(created_at);
 CREATE INDEX idx_sessions_session_id ON assessment_sessions(session_id);
 CREATE INDEX idx_sessions_user_ip ON assessment_sessions(user_ip);
+CREATE INDEX idx_assessment_sessions_coze_bot_id ON assessment_sessions(coze_bot_id);
 
 -- 评估结果表索引
 CREATE INDEX idx_results_session_id ON assessment_results(session_id);

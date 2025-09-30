@@ -464,6 +464,46 @@ SSE日志流（通过URL参数认证）
 }
 ```
 
+## 扣子ID管理接口
+
+### GET /api/coze-bot-id
+获取当前扣子ID
+
+**响应**
+```json
+{
+  "success": true,
+  "cozeBotId": "7550204987524169763"
+}
+```
+
+### PUT /api/coze-bot-id
+更新扣子ID
+
+**请求**
+```json
+{
+  "cozeBotId": "7550204987524169763"
+}
+```
+
+**响应**
+```json
+{
+  "success": true,
+  "message": "扣子ID更新成功",
+  "cozeBotId": "7550204987524169763"
+}
+```
+
+**错误响应**
+```json
+{
+  "success": false,
+  "message": "扣子ID格式不正确，应为纯数字"
+}
+```
+
 ## 问题搜索接口
 
 ### GET /api/question-search
