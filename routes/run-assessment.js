@@ -107,6 +107,8 @@ router.post('/run-assessment', async (req, res) => {
       if (!('专业度_理由' in row)) row['专业度_理由'] = null;
       if (!('语气合理' in row)) row['语气合理'] = null;
       if (!('语气合理_理由' in row)) row['语气合理_理由'] = null;
+      if (!('evaluator_info' in row)) row['evaluator_info'] = null;
+      if (!('evaluator_version_id' in row)) row['evaluator_version_id'] = null;
     });
     
     // 筛选需要评估的行
