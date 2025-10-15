@@ -655,17 +655,23 @@ class EvaluatorModal {
       });
     });
     
-    return {
+    const formData = {
       name: document.getElementById('evaluatorName').value.trim(),
       description: document.getElementById('evaluatorDescription').value.trim(),
       question_type: document.getElementById('questionType').value.trim() || null,
-      is_default: false,
-      is_active: true,
       assistant_name: document.getElementById('assistantName').value.trim(),
       assistant_description: document.getElementById('assistantDescription').value.trim(),
       criteria,
       change_notes: document.getElementById('changeNotes').value.trim()
     };
+    
+    // 只有新建时才设置is_default和is_active
+    if (!this.isEditing) {
+      formData.is_default = false;
+      formData.is_active = true;
+    }
+    
+    return formData;
   }
 }
 

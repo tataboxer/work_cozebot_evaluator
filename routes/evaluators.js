@@ -148,16 +148,27 @@ router.put('/:id', async (req, res) => {
         .neq('id', id);
     }
 
+    // 构建更新数据，只更新明确传递的字段
+    const updateData = {
+      name,
+      description,
+      question_type: question_type || null,
+      updated_at: new Date().toISOString()
+    };
+    
+    // 只有明确传递了is_default时才更新
+    if (is_default !== undefined) {
+      updateData.is_default = is_default;
+    }
+    
+    // 只有明确传递了is_active时才更新
+    if (is_active !== undefined) {
+      updateData.is_active = is_active;
+    }
+
     const { data, error } = await supabase
       .from('evaluators')
-      .update({
-        name,
-        description,
-        question_type: question_type || null,
-        is_default: is_default || false,
-        is_active: is_active !== undefined ? is_active : true,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
