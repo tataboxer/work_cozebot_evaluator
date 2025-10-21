@@ -25,7 +25,7 @@ const DEFAULT_COZE_API_TOKEN = process.env.COZE_API_TOKEN;
 const DEFAULT_BOT_ID = process.env.COZE_BOT_ID;
 const DEFAULT_CONTENT = process.env.DEFAULT_CONTENT || '今天星期几';
 
-const PROJECT_ID = process.env.COZE_PROJECT_ID || 'fdb3e9f7-099b-3962-8ce5-0f67cd490d9f';
+const PROJECT_ID = process.env.COZE_PROJECT_ID;
 
 /**
  * 调用Coze Bot并返回流式响应结果
@@ -164,10 +164,21 @@ function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
       // 在这里开始计时 - 请求发送后开始计算响应时间
       const startTime = Date.now();
       console.log(`请求已发送，开始计时: ${(Date.now() - startTime) / 1000.0}s`);
+      
       // 检查HTTP状态码
       if (res.statusCode < 200 || res.statusCode >= 300) {
         console.error(`HTTP错误: ${res.statusCode}`);
         console.error(`请求失败，状态码: ${res.statusCode}`);
+        
+        // 收集错误响应内容
+        let errorData = '';
+        res.on('data', (chunk) => {
+          errorData += chunk.toString();
+        });
+        res.on('end', () => {
+          console.error(`错误响应内容: ${errorData}`);
+          reject(new Error(`HTTP ${res.statusCode}: ${errorData}`));
+        });
         return;
       }
       // console.log(`流式响应状态码: ${res.statusCode} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
@@ -266,25 +277,32 @@ function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
     });
 
     res.on('end', () => {
+      console.log(`\n🎯 流式响应完成，总耗时: ${((Date.now() - startTime) / 1000.0).toFixed(2)}s`);
+      
       // 收集分析结果
       const results = [];
       let segmentCount = 0;
 
       // 按照消息ID的顺序输出结果
       const orderedIds = Array.from(firstTokenTimes.keys());
+      console.log(`📊 处理 ${orderedIds.length} 个消息段`);
+      
       orderedIds.forEach((id, index) => {
         const type = messageTypes.get(id) || 'unknown';
         if (type !== 'verbose') {
           segmentCount++;
-          const blockEndTime = messageEndTimes.get(id) || firstTokenTimes.get(id);
-
+          const content = messageContents.get(id) || '无内容';
           const subType = messageSubTypes.get(id);
+          
+          console.log(`\n📝 段落 ${segmentCount}: [${type}${subType ? `/${subType}` : ''}]`);
+          console.log(`   内容: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`);
+          console.log(`   时间: ${firstTokenTimes.get(id)}s - ${messageEndTimes.get(id) || firstTokenTimes.get(id)}s`);
 
           results.push({
             block_id: segmentCount,
             block_type: type,
             block_subtype: subType || (type === 'answer' ? '文本回复' : ''),
-            block_result: messageContents.get(id) || '无内容',
+            block_result: content,
             block_start: parseFloat(firstTokenTimes.get(id)),
             block_end: parseFloat(messageEndTimes.get(id) || firstTokenTimes.get(id))
           });
@@ -298,16 +316,21 @@ function callCozeBot(content = DEFAULT_CONTENT, contextJson = null) {
       messageSubTypes.clear();
       messageEndTimes.clear();
 
+      console.log(`\n✅ 解析完成，返回 ${results.length} 个有效段落`);
+      if (chatId) {
+        console.log(`🆔 Chat ID: ${chatId}`);
+      }
+      
       // 返回结果
       resolve({ segments: results, chatId });
     });
   });
 
-  // 处理请求错误
-  req.on('error', (error) => {
-    console.error(`❌ 流式请求失败: ${error.message} (${((Date.now() - startTime) / 1000.0).toFixed(3)}s)`);
-    reject(error);
-  });
+    // 处理请求错误
+    req.on('error', (error) => {
+      console.error(`❌ 流式请求失败: ${error.message}`);
+      reject(error);
+    });
 
     // 发送请求数据
     req.write(JSON.stringify(requestData));
@@ -327,5 +350,14 @@ if (require.main === module) {
   console.log('='.repeat(60));
 
   // 直接调用Coze Bot
-  callCozeBot();
+  callCozeBot()
+    .then(result => {
+      console.log('\n🎉 测试完成！');
+      console.log('='.repeat(60));
+    })
+    .catch(error => {
+      console.error('\n❌ 测试失败:', error.message);
+      console.log('='.repeat(60));
+      process.exit(1);
+    });
 }
