@@ -14,7 +14,7 @@ class QuestionSearch {
     }
 
     showEmptyState() {
-        document.getElementById('questionsTableBody').innerHTML = '<tr><td colspan="19" style="text-align: center; padding: 40px; color: #666;">请输入搜索条件后点击搜索</td></tr>';
+        document.getElementById('questionsTableBody').innerHTML = '<tr><td colspan="20" style="text-align: center; padding: 40px; color: #666;">请输入搜索条件后点击搜索</td></tr>';
         document.getElementById('questionResultsCount').textContent = '请输入搜索条件';
     }
 
@@ -32,6 +32,10 @@ class QuestionSearch {
         document.getElementById('questionEndDate').addEventListener('change', () => {
             this.searchQuestions();
         });
+        
+        document.getElementById('questionCozeBotIdFilter').addEventListener('change', () => {
+            this.loadQuestions();
+        });
     }
 
     async loadQuestions() {
@@ -39,6 +43,7 @@ class QuestionSearch {
             const question = document.getElementById('questionSearchInput').value.trim();
             const startDate = document.getElementById('questionStartDate').value;
             const endDate = document.getElementById('questionEndDate').value;
+            const cozeBotId = document.getElementById('questionCozeBotIdFilter').value;
 
             const params = new URLSearchParams({
                 page: this.currentPage,
@@ -48,6 +53,7 @@ class QuestionSearch {
             if (question) params.append('question', question);
             if (startDate) params.append('startDate', startDate);
             if (endDate) params.append('endDate', endDate);
+            if (cozeBotId) params.append('cozeBotId', cozeBotId);
 
             const accessKey = localStorage.getItem('access_key');
             if (!accessKey) {
@@ -76,7 +82,8 @@ class QuestionSearch {
 
     renderTable(results) {
         if (!results || results.length === 0) {
-            document.getElementById('questionsTableBody').innerHTML = '<tr><td colspan="19" style="text-align: center; padding: 40px; color: #666;">暂无数据</td></tr>';
+            document.getElementById('questionsTableBody').innerHTML = '<tr><td colspan="20" style="text-align: center; padding: 40px; color: #666;">暂无数据</td></tr>';
+            document.getElementById('questionStats').style.display = 'none';
             return;
         }
 
@@ -85,7 +92,7 @@ class QuestionSearch {
         
         // 构建完整列顺序
         const baseColumns = ['question_text', 'context', 'ai_response', 'block_start', 'block_end', 'expected_answer'];
-        const endColumns = ['question_id', 'question_type', 'chatid'];
+        const endColumns = ['question_id', 'question_type', 'chatid', 'coze_bot_id'];
         const fullColumns = [...baseColumns, ...evaluationColumns, ...endColumns];
         
         // 渲染表头
@@ -93,6 +100,12 @@ class QuestionSearch {
         
         // 渲染表体
         this.renderTableBody(results, fullColumns);
+        
+        // 更新统计信息
+        this.updateQuestionStats(results);
+        
+        // 更新扣子ID筛选器
+        this.updateCozeBotIdFilter(results);
     }
 
     parseEvaluationResults(evaluationResults) {
@@ -143,7 +156,8 @@ class QuestionSearch {
             'expected_answer': '期望答案',
             'question_id': '问题ID',
             'question_type': '问题类型',
-            'chatid': '对话ID'
+            'chatid': '对话ID',
+            'coze_bot_id': '扣子ID'
         };
         
         thead.innerHTML = `
@@ -210,6 +224,7 @@ class QuestionSearch {
         if (column === 'question_id') return row.question_id || '';
         if (column === 'question_type') return row.question_type || '';
         if (column === 'chatid') return row.chatid || '';
+        if (column === 'coze_bot_id') return row.assessment_sessions?.coze_bot_id || '';
         
         // 处理evaluation_results中的字段
         let evaluation = {};
@@ -273,7 +288,84 @@ class QuestionSearch {
     }
 
     showError(message) {
-        document.getElementById('questionsTableBody').innerHTML = `<tr><td colspan="19" style="text-align: center; padding: 40px; color: #dc3545;">${message}</td></tr>`;
+        document.getElementById('questionsTableBody').innerHTML = `<tr><td colspan="20" style="text-align: center; padding: 40px; color: #dc3545;">${message}</td></tr>`;
+    }
+    
+    updateCozeBotIdFilter(results) {
+        const select = document.getElementById('questionCozeBotIdFilter');
+        const currentValue = select.value;
+        
+        // 获取结果中的所有扣子ID
+        const cozeBotIds = [...new Set(
+            results
+                .map(row => row.assessment_sessions?.coze_bot_id)
+                .filter(id => id)
+        )].sort();
+        
+        // 重新填充选项
+        select.innerHTML = '<option value="">所有扣子ID</option>';
+        cozeBotIds.forEach(botId => {
+            const option = document.createElement('option');
+            option.value = botId;
+            option.textContent = botId;
+            if (botId === currentValue) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+    }
+    
+    updateQuestionStats(results) {
+        if (!results || results.length === 0) {
+            document.getElementById('questionStats').style.display = 'none';
+            return;
+        }
+        
+        // 计算开始时间统计
+        const blockStartTimes = results
+            .map(row => parseFloat(row.block_start))
+            .filter(time => !isNaN(time) && time > 0);
+            
+        if (blockStartTimes.length === 0) {
+            document.getElementById('questionStats').style.display = 'none';
+            return;
+        }
+        
+        const avgBlockStart = blockStartTimes.reduce((sum, time) => sum + time, 0) / blockStartTimes.length;
+        const minBlockStart = Math.min(...blockStartTimes);
+        const maxBlockStart = Math.max(...blockStartTimes);
+        
+        // 计算结束时间统计
+        const blockEndTimes = results
+            .map(row => parseFloat(row.block_end))
+            .filter(time => !isNaN(time) && time > 0);
+            
+        let blockEndStats = '';
+        if (blockEndTimes.length > 0) {
+            const avgBlockEnd = blockEndTimes.reduce((sum, time) => sum + time, 0) / blockEndTimes.length;
+            const minBlockEnd = Math.min(...blockEndTimes);
+            const maxBlockEnd = Math.max(...blockEndTimes);
+            blockEndStats = `
+                <div class="stat-item">
+                    <div class="stat-label">结束时间平均:</div>
+                    <div class="stat-value">${avgBlockEnd.toFixed(1)}s (${minBlockEnd.toFixed(1)}-${maxBlockEnd.toFixed(1)})</div>
+                </div>
+            `;
+        }
+        
+        document.getElementById('questionStats').innerHTML = `
+            <div class="stat-item">
+                <div class="stat-label">开始时间平均:</div>
+                <div class="stat-value">${avgBlockStart.toFixed(1)}s (${minBlockStart.toFixed(1)}-${maxBlockStart.toFixed(1)})</div>
+            </div>
+            ${blockEndStats}
+            <div class="stat-item">
+                <div class="stat-label">统计数量:</div>
+                <div class="stat-value">${results.length} 条记录</div>
+            </div>
+        `;
+        
+        document.getElementById('questionStats').style.display = 'flex';
     }
 }
 
@@ -303,9 +395,11 @@ function resetQuestionSearch() {
     document.getElementById('questionSearchInput').value = '';
     document.getElementById('questionStartDate').value = '';
     document.getElementById('questionEndDate').value = '';
+    document.getElementById('questionCozeBotIdFilter').value = '';
     if (window.questionSearch) {
         window.questionSearch.currentPage = 1;
-        window.questionSearch.loadQuestions();
+        window.questionSearch.showEmptyState();
+        document.getElementById('questionStats').style.display = 'none';
     }
 }
 

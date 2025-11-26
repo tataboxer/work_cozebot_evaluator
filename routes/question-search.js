@@ -9,6 +9,7 @@ router.get('/', async (req, res) => {
       question = '', 
       startDate, 
       endDate, 
+      cozeBotId = '',
       page = 1, 
       limit = 20 
     } = req.query;
@@ -28,7 +29,7 @@ router.get('/', async (req, res) => {
         question_type,
         block_start,
         block_end,
-        assessment_sessions!inner(session_name)
+        assessment_sessions!inner(session_name, coze_bot_id)
       `)
       .order('created_at', { ascending: false });
 
@@ -44,11 +45,16 @@ router.get('/', async (req, res) => {
     if (endDate) {
       query = query.lte('created_at', endDate + 'T23:59:59');
     }
+    
+    // 扣子ID筛选
+    if (cozeBotId.trim()) {
+      query = query.filter('assessment_sessions.coze_bot_id', 'eq', cozeBotId.trim());
+    }
 
     // 获取总数
     let countQuery = supabase
       .from('assessment_results')
-      .select('*', { count: 'exact', head: true });
+      .select('assessment_sessions!inner(coze_bot_id)', { count: 'exact', head: true });
     
     if (question.trim()) {
       countQuery = countQuery.ilike('question_text', `%${question.trim()}%`);
@@ -58,6 +64,11 @@ router.get('/', async (req, res) => {
     }
     if (endDate) {
       countQuery = countQuery.lte('created_at', endDate + 'T23:59:59');
+    }
+    
+    // 扣子ID筛选
+    if (cozeBotId.trim()) {
+      countQuery = countQuery.filter('assessment_sessions.coze_bot_id', 'eq', cozeBotId.trim());
     }
 
     const { count: totalCount } = await countQuery;

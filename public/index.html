@@ -195,6 +195,9 @@
                             <input type="text" id="questionSearchInput" placeholder="输入问题内容进行模糊匹配">
                             <input type="date" id="questionStartDate" placeholder="开始日期">
                             <input type="date" id="questionEndDate" placeholder="结束日期">
+                            <select id="questionCozeBotIdFilter">
+                                <option value="">所有扣子ID</option>
+                            </select>
                             <select id="questionPageSizeSelect" onchange="changeQuestionPageSize()">
                                 <option value="20" selected>每页 20 条</option>
                                 <option value="50">每页 50 条</option>
@@ -226,6 +229,8 @@
                             <span id="questionPageInfo">第 1 页，共 1 页</span>
                             <button onclick="nextQuestionPage()">下一页</button>
                         </div>
+                        
+                        <div id="questionStats" class="csv-stats" style="display: none;"></div>
                     </div>
                 </div>
             </div>
